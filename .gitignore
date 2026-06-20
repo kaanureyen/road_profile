@@ -15,6 +15,7 @@ test_speed.py
 test_speed_fmu.py
 test_math_speed.py
 test_inplace_speed.py
+test_chunk_sizes.py
 verify_a_math.py
 verify_exact_a.py
 verify_exact_a_ref.py
