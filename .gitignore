@@ -1,0 +1,36 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary FMU extraction directories (created during fmpy runs)
+temp_fmu_*/
+unzip_*/
+fmu_extract_*/
+*.fmu.tmp/
+
+# Local testing and debug scripts
+test_speed.py
+test_speed_fmu.py
+test_math_speed.py
+test_inplace_speed.py
+verify_a_math.py
+verify_exact_a.py
+verify_exact_a_ref.py
+plot_*.py
+generate_road.py
+generate_iso8608_road.py
+generate_another_road.py
+generate_9_roads.py
+generate_2d_road_demo.py
+fit_multiple_slices*.py
+
+# Large data and outputs
+*.npz
+*.png
+*.txt
+*.log
+
+# Keep the compiled FMU itself
+!InfiniteRoadFMU.fmu
