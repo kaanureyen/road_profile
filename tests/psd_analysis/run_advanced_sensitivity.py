@@ -1,67 +1,17 @@
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
+
+# Add tests/ to path to import fmu_helper
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from fmu_helper import FMURoadQuery
 
 def get_I(alpha):
     t = np.linspace(-2000, 2000, 200000)
     dt = t[1] - t[0]
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
-
-class SumOfSinusoidsRoad:
-    def __init__(self, Gd_n0=64e-6, w=2.0, f_min=0.002, f_max=2000.0, Nf=64, Ntheta=16):
-        self.Gd_n0 = Gd_n0
-        self.w = w
-        self.f_min = f_min
-        self.f_max = f_max
-        self.Nf = Nf
-        self.Ntheta = Ntheta
-        self._init_waves()
-
-    def _init_waves(self):
-        rng = np.random.RandomState(42)
-        n0 = 0.1
-        C1 = self.Gd_n0 * (n0**self.w)
-        alpha = self.w + 1.0
-        I_val = get_I(alpha)
-        self.C2 = C1 / (2.0 * I_val)
-        
-        f_r = np.logspace(np.log10(self.f_min), np.log10(self.f_max), self.Nf + 1)
-        df_r = np.diff(f_r)
-        f_centers = 0.5 * (f_r[:-1] + f_r[1:])
-        
-        theta = np.linspace(0, 2*np.pi, self.Ntheta, endpoint=False)
-        dtheta = 2*np.pi / self.Ntheta
-        
-        self.amps = []
-        self.kx = []
-        self.ky = []
-        self.phis = []
-        
-        for i in range(self.Nf):
-            fc = f_centers[i]
-            dfc = df_r[i]
-            S_2D_val = self.C2 * (fc**(-alpha))
-            power_per_angle = S_2D_val * fc * dfc * dtheta
-            amp = np.sqrt(2.0 * power_per_angle)
-            for j in range(self.Ntheta):
-                th = theta[j]
-                phi = rng.uniform(0, 2*np.pi)
-                self.amps.append(amp)
-                self.kx.append(2.0 * np.pi * fc * np.cos(th))
-                self.ky.append(2.0 * np.pi * fc * np.sin(th))
-                self.phis.append(phi)
-                
-        self.amps = np.array(self.amps)
-        self.kx = np.array(self.kx)
-        self.ky = np.array(self.ky)
-        self.phis = np.array(self.phis)
-
-    def height(self, x, y):
-        h = np.zeros_like(x)
-        for amp, kx, ky, phi in zip(self.amps, self.kx, self.ky, self.phis):
-            h += amp * np.cos(kx * x + ky * y + phi)
-        return h
 
 # Exact cumulative PSD model
 def exact_isotropic_cum_model(f_array, C1, w, f_max=2000.0):
@@ -79,7 +29,7 @@ def main():
     
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\6bd8f97d-a5dd-4779-9267-df20885b87f3"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
     except Exception:
@@ -104,6 +54,9 @@ def main():
     w_target = 2.0
     C1_target = G_target * (0.1**w_target)
     
+    # Initialize FMU query helper
+    fmu_query = FMURoadQuery()
+    
     # ----------------------------------------------------
     # Study 1: Nf Sensitivity (Frequency Bins) - Raw & Cumulative
     # ----------------------------------------------------
@@ -126,8 +79,10 @@ def main():
     
     for idx, Nf in enumerate(Nf_values):
         print(f"  Nf = {Nf}...", flush=True)
-        road = SumOfSinusoidsRoad(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=Nf, Ntheta=16)
-        z = road.height(px, py)
+        slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=Nf, Ntheta=16)
+        z = fmu_query.query_profile(slave, px, py)
+        slave.terminate()
+        slave.freeInstance()
         
         # Periodogram PSD
         win = np.hanning(N_slice)
@@ -185,8 +140,10 @@ def main():
     
     for idx, Ntheta in enumerate(Ntheta_values):
         print(f"  Ntheta = {Ntheta}...", flush=True)
-        road = SumOfSinusoidsRoad(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=64, Ntheta=Ntheta)
-        z = road.height(px, py)
+        slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=64, Ntheta=Ntheta)
+        z = fmu_query.query_profile(slave, px, py)
+        slave.terminate()
+        slave.freeInstance()
         
         # Periodogram PSD
         win = np.hanning(N_slice)

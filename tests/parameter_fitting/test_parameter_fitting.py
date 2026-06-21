@@ -7,86 +7,14 @@ from scipy.optimize import curve_fit
 import scipy.integrate as integrate
 from concurrent.futures import ProcessPoolExecutor
 
+# Add tests/ to path to import fmu_helper
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from fmu_helper import FMURoadQuery
+
 def get_I(alpha):
     t = np.linspace(-2000, 2000, 200000)
     dt = t[1] - t[0]
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
-
-class SumOfSinusoidsRoad:
-    def __init__(self, Gd_n0=256e-6, w=2.0, f_min=0.002, f_max=2000.0, Nf=512, Ntheta=32):
-        self.Gd_n0 = Gd_n0
-        self.w = w
-        self.f_min = f_min
-        self.f_max = f_max
-        self.Nf = Nf
-        self.Ntheta = Ntheta
-        self._init_waves()
-
-    def _init_waves(self):
-        rng = np.random.RandomState(42)
-        n0 = 0.1
-        C1 = self.Gd_n0 * (n0**self.w)
-        alpha = self.w + 1.0
-        I_val = get_I(alpha)
-        self.C2 = C1 / (2.0 * I_val)
-        
-        f_r = np.logspace(np.log10(self.f_min), np.log10(self.f_max), self.Nf + 1)
-        df_r = np.diff(f_r)
-        f_centers = 0.5 * (f_r[:-1] + f_r[1:])
-        
-        theta = np.linspace(0, 2*np.pi, self.Ntheta, endpoint=False)
-        dtheta = 2*np.pi / self.Ntheta
-        
-        self.amps = []
-        self.kx = []
-        self.ky = []
-        self.phis = []
-        
-        for i in range(self.Nf):
-            fc = f_centers[i]
-            dfc = df_r[i]
-            S_2D_val = self.C2 * (fc**(-alpha))
-            power_per_angle = S_2D_val * fc * dfc * dtheta
-            amp = np.sqrt(2.0 * power_per_angle)
-            for j in range(self.Ntheta):
-                th = theta[j]
-                phi = rng.uniform(0, 2*np.pi)
-                self.amps.append(amp)
-                self.kx.append(2.0 * np.pi * fc * np.cos(th))
-                self.ky.append(2.0 * np.pi * fc * np.sin(th))
-                self.phis.append(phi)
-                
-        self.amps = np.array(self.amps)
-        self.kx = np.array(self.kx)
-        self.ky = np.array(self.ky)
-        self.phis = np.array(self.phis)
-
-    def height_1d_chunked_f32(self, x1, y1, theta_slice, s, chunk_size=128):
-        s_32 = s.astype(np.float32)
-        cos_t = np.float32(np.cos(theta_slice))
-        sin_t = np.float32(np.sin(theta_slice))
-        x1_32 = np.float32(x1)
-        y1_32 = np.float32(y1)
-        
-        kx_32 = self.kx.astype(np.float32)
-        ky_32 = self.ky.astype(np.float32)
-        phis_32 = self.phis.astype(np.float32)
-        amps_32 = self.amps.astype(np.float32)
-        
-        k = kx_32 * cos_t + ky_32 * sin_t
-        psi = kx_32 * x1_32 + ky_32 * y1_32 + phis_32
-        
-        h = np.zeros_like(s_32)
-        M = len(amps_32)
-        for i in range(0, M, chunk_size):
-            k_c = k[i:i+chunk_size, np.newaxis]
-            psi_c = psi[i:i+chunk_size, np.newaxis]
-            amps_c = amps_32[i:i+chunk_size, np.newaxis]
-            
-            arg = k_c * s_32 + psi_c
-            h += np.sum(amps_c * np.cos(arg), axis=0)
-            
-        return h.astype(np.float64)
 
 # Exact cumulative PSD model used for curve fitting
 def exact_isotropic_cum_model(f_array, C1, w):
@@ -100,7 +28,8 @@ def exact_isotropic_cum_model(f_array, C1, w):
 
 # Worker function to process a single slice in parallel
 def process_slice_worker(args):
-    slice_idx, seed, G_target, w_target, Nf, Ntheta, slice_length, dx, f_fit_min, f_fit_max, slope_w, intercept_w, G_calibration_mult = args
+    (slice_idx, seed, G_target, w_target, Nf, Ntheta, slice_length, dx, f_fit_min, f_fit_max, 
+     slope_w, intercept_w, G_calibration_mult, unzipdir, guid, model_identifier, var_refs) = args
     
     rng = np.random.RandomState(seed + slice_idx)
     
@@ -113,8 +42,47 @@ def process_slice_worker(args):
     
     s = np.linspace(0, slice_length, int(slice_length / dx), endpoint=False)
     
-    road = SumOfSinusoidsRoad(Gd_n0=G_target, w=w_target, Nf=Nf, Ntheta=Ntheta)
-    z = road.height_1d_chunked_f32(x1, y1, theta_slice, s, chunk_size=128)
+    # Query using FMU via fmpy
+    from fmpy.fmi2 import FMU2Slave
+    slave = FMU2Slave(
+        guid=guid,
+        unzipDirectory=unzipdir,
+        modelIdentifier=model_identifier,
+        instanceName=f"fitting_worker_{seed}_{slice_idx}"
+    )
+    slave.instantiate()
+    slave.setupExperiment(startTime=0.0)
+    slave.enterInitializationMode()
+    
+    # Set parameters
+    slave.setInteger([var_refs['seed']], [int(seed + slice_idx)])
+    slave.setInteger([var_refs['road_class']], [0])  # Custom Gd_n0
+    slave.setReal([var_refs['Gd_n0']], [float(G_target)])
+    slave.setReal([var_refs['w']], [float(w_target)])
+    slave.setReal([var_refs['f_min']], [0.002])
+    slave.setReal([var_refs['f_max']], [2000.0])
+    
+    if 'Nf' in var_refs:
+        slave.setInteger([var_refs['Nf']], [int(Nf)])
+    if 'Ntheta' in var_refs:
+        slave.setInteger([var_refs['Ntheta']], [int(Ntheta)])
+        
+    slave.exitInitializationMode()
+    
+    x_ref = var_refs['x']
+    y_ref = var_refs['y']
+    z_ref = var_refs['z']
+    
+    px = x1 + s * np.cos(theta_slice)
+    py = y1 + s * np.sin(theta_slice)
+    
+    z = np.zeros_like(s)
+    for idx in range(len(s)):
+        slave.setReal([x_ref, y_ref], [px[idx], py[idx]])
+        z[idx] = slave.getReal([z_ref])[0]
+        
+    slave.terminate()
+    slave.freeInstance()
     
     N_slice = len(s)
     fs = 1.0 / dx
@@ -156,7 +124,7 @@ def process_slice_worker(args):
         
     return freqs, psd, cum_psd, w_cal, G_cal, x1, y1, theta_slice
 
-def run_fitting_case(G_target, w_target, num_slices=10, slice_length=500.0, dx=0.002, seed=42, workers=10):
+def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.002, seed=42, workers=10):
     print(f"\n--- Running case: G = {G_target:.2e}, w = {w_target:.2f} ---", flush=True)
     
     Nf = 512
@@ -172,7 +140,8 @@ def run_fitting_case(G_target, w_target, num_slices=10, slice_length=500.0, dx=0
     for i in range(num_slices):
         tasks.append((
             i, seed, G_target, w_target, Nf, Ntheta, slice_length, dx,
-            f_fit_min, f_fit_max, slope_w, intercept_w, G_calibration_mult
+            f_fit_min, f_fit_max, slope_w, intercept_w, G_calibration_mult,
+            unzipdir, guid, model_identifier, var_refs
         ))
         
     w_fits = []
@@ -290,13 +259,13 @@ def plot_case_results(res, output_path):
     ax4.set_ylabel("Fitted Gd(n0) (um3)")
     ax4.grid(True, **grid_style)
     
-    fig.suptitle(f"Location & Direction Dependency (Calibrated Cumulative PSD Method)\nTarget Parameters: G = {G_target:.2e} m3, w = {w_target:.2f}", fontsize=13, fontweight='bold')
+    fig.suptitle(f"Location & Direction Dependency (Calibrated Cumulative PSD Method - FMU)\nTarget Parameters: G = {G_target:.2e} m3, w = {w_target:.2f}", fontsize=13, fontweight='bold')
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()
 
 def main():
-    print("=== ROAD PROFILE PARAMETER FITTING & DEPENDENCY PLOTTING (Nf=512, Ntheta=32) ===", flush=True)
+    print("=== ROAD PROFILE PARAMETER FITTING & DEPENDENCY PLOTTING (FMU) ===", flush=True)
     
     cases = [
         {'G': 64e-6,   'w': 2.0},  # Case 1: Class B, w=2.0
@@ -309,18 +278,25 @@ def main():
     
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\6bd8f97d-a5dd-4779-9267-df20885b87f3"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
     except Exception:
         pass
+    
+    # Extract FMU once in main process
+    fmu_query = FMURoadQuery()
+    guid = fmu_query.guid
+    unzipdir = fmu_query.unzipdir
+    model_identifier = fmu_query.model_identifier
+    var_refs = fmu_query.var_refs
     
     workers = min(10, os.cpu_count())
     print(f"Running cases on {workers} parallel workers.", flush=True)
     
     results = []
     for idx, case in enumerate(cases):
-        res = run_fitting_case(case['G'], case['w'], num_slices=10, slice_length=500.0, dx=0.002, seed=200+idx, workers=workers)
+        res = run_fitting_case(case['G'], case['w'], unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.002, seed=200+idx, workers=workers)
         results.append(res)
         
         local_plot_name = f"parameter_fitting_case_{idx+1}.png"
@@ -393,8 +369,8 @@ def main():
         print(f"Could not save summary plot to artifact directory: {e}")
     plt.close()
     
-    # Save text summary report
-    script_text_path = os.path.join(script_dir, "parameter_fitting_analysis.md")
+    # Save text summary report as README.md inside tests/parameter_fitting/
+    script_text_path = os.path.join(script_dir, "README.md")
     summary_text_path = os.path.join(artifact_dir, "parameter_fitting_analysis.md")
     
     filepaths_to_write = [script_text_path]
@@ -456,6 +432,14 @@ def main():
                 f.write("![Parameter Fitting Summary](parameter_fitting_summary.png)\n\n")
         except Exception as e:
             print(f"Could not write to {filepath}: {e}")
+            
+    # Clean up old parameter_fitting_analysis.md in tests/parameter_fitting/
+    old_report = os.path.join(script_dir, "parameter_fitting_analysis.md")
+    if os.path.exists(old_report):
+        try:
+            os.remove(old_report)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()

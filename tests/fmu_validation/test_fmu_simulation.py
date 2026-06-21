@@ -124,8 +124,65 @@ def main():
         assert abs(diff) > 1e-4, "Seed parameter did not change the road realization!"
         print("SUCCESS: Different seeds generate independent random realizations!")
         
+        # Generate plot for validation report
+        import matplotlib.pyplot as plt
+        print("\n--- Generating validation plots for the report ---")
+        s_eval = np.linspace(0.0, 20.0, 500)
+        
+        # We will reuse the first wheel instance (seed 42) and the seed 99 instance
+        z_wheel1 = []
+        z_wheel2 = []
+        z_seed99_arr = []
+        
+        for sx in s_eval:
+            slaves[0].setReal([x_ref, y_ref], [sx, 5.0])
+            z_wheel1.append(slaves[0].getReal([z_ref])[0])
+            
+            slaves[1].setReal([x_ref, y_ref], [sx, 3.5])
+            z_wheel2.append(slaves[1].getReal([z_ref])[0])
+            
+            slave_seed99.setReal([x_ref, y_ref], [sx, 5.0])
+            z_seed99_arr.append(slave_seed99.getReal([z_ref])[0])
+            
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+        
+        ax1.plot(s_eval, z_wheel1, label='Wheel 1 (y = 5.0 m)', color='#1f77b4')
+        ax1.plot(s_eval, z_wheel2, label='Wheel 2 (y = 3.5 m)', color='#ff7f0e', linestyle='--')
+        ax1.set_title('Concurrent Querying on Distinct Spatial Paths (Seed 42)')
+        ax1.set_xlabel('Longitudinal Position x (m)')
+        ax1.set_ylabel('Road Height z (m)')
+        ax1.grid(True, linestyle='--', alpha=0.6)
+        ax1.legend()
+        
+        ax2.plot(s_eval, z_wheel1, label='Seed 42 (Realization 1)', color='#1f77b4')
+        ax2.plot(s_eval, z_seed99_arr, label='Seed 99 (Realization 2)', color='#d62728', linestyle=':')
+        ax2.set_title('Seed Sensitivity: Independent Realizations at y = 5.0 m')
+        ax2.set_xlabel('Longitudinal Position x (m)')
+        ax2.set_ylabel('Road Height z (m)')
+        ax2.grid(True, linestyle='--', alpha=0.6)
+        ax2.legend()
+        
+        plt.tight_layout()
+        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        plot_path = os.path.join(script_dir, "fmu_simulation_results.png")
+        plt.savefig(plot_path, dpi=150)
+        print(f"Validation plot saved to {plot_path}")
+        
+        # Copy to artifact folder if available
+        artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
+        if not artifact_dir:
+            artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+        try:
+            os.makedirs(artifact_dir, exist_ok=True)
+            plt.savefig(os.path.join(artifact_dir, "fmu_simulation_results.png"), dpi=150)
+        except Exception as e:
+            print(f"Could not save copy to artifact: {e}")
+        plt.close()
+        
         slave_seed99.terminate()
         slave_seed99.freeInstance()
+
         
     finally:
         # Clean up slaves

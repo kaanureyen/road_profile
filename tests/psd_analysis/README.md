@@ -1,0 +1,63 @@
+# Power Spectral Density (PSD) and Grid Sensitivity Analysis
+
+This directory contains analytical studies, sensitivity analyses, and visualization reports examining the spatial frequency representation of the 2D isotropic road generator simulated using the compiled FMU.
+
+---
+
+## 1. Direct FFT vs. Welch PSD Estimation
+Slicing through a 2D surface composed of discrete wave components produces a discrete line spectrum. A Periodogram direct FFT on the entire 40,000-point signal ($dx=0.025\text{m}$, length $1000\text{m}$) resolves these discrete sinusoids as extremely sharp spikes (left plot below). Welch's method averages segments, which smooths out the variance but smears the power. 
+
+Integrating the PSD from high to low frequencies yields the cumulative power curve (right plot below). The cumulative curve is smooth, monotonic, and immune to empty-bin valleys.
+
+![Direct FFT PSD Comparison](psd_direct_fft_comparison.png)
+
+---
+
+## 2. Infinite vs. Truncated Isotropic Model
+Physical generators are band-limited ($f \in [f_{\min}, f_{\max}]$). Slicing also truncates the transverse frequency integration tail. 
+
+Below $f_{\min} = 0.002$ cycles/m, no waves are generated, so the physical cumulative PSD (blue) becomes flat. The infinite theoretical model (red) grows to infinity, whereas the exact model (green) captures the flat profile and tail truncation drop-off near the Nyquist limit perfectly.
+
+![Infinite PSD Comparison](psd_infinite_comparison.png)
+
+---
+
+## 3. Unbiased Parameter Fitting PSD Curves
+This plot compares the continuous target ISO 8608 PSD against the Welch-estimated PSD and the cumulative PSD. The orange band shows the calibrated fit window $[0.1, 3.0]$ cycles/m, which avoids low-frequency detrending bias and Nyquist sparsity, yielding unbiased parameter estimation.
+
+![PSD Comparison Curves](psd_comparison_curves.png)
+
+---
+
+## 4. Parameter Grid Sweep ($w$ and $G$)
+We evaluate four extreme road parameter cases to verify the exact model's validity across all scales:
+1. $G = 4.0\ \mu\text{m}^3, w = 1.5$ (Smoother than Class A)
+2. $G = 64.0\ \mu\text{m}^3, w = 2.0$ (Class B)
+3. $G = 256.0\ \mu\text{m}^3, w = 3.0$ (Class C)
+4. $G = 16384.0\ \mu\text{m}^3, w = 4.5$ (Harsher than Class E)
+
+![Parameter Comparison](psd_multi_params.png)
+
+---
+
+## 5. Grid Sensitivity: Number of Frequency Rings ($N_f$)
+Varying $N_f$ defines how densely the log-spaced wave rings are spaced radially. 
+- At low $N_f = 16$, the spectrum consists of sparse spikes and the cumulative PSD has large coarse "stairs".
+- Increasing $N_f \ge 256$ yields a smooth, continuous spectrum and cumulative curve.
+
+![Nf Sensitivity](psd_sensitivity_Nf_raw_cum.png)
+*(An additional single-plot version of this sensitivity study is saved as `psd_sensitivity_Nf.png`)*
+
+---
+
+## 6. Grid Sensitivity: Number of Directions ($N_\theta$)
+Varying $N_\theta$ defines how many directions are used to distribute the wave components over the $2\pi$ circle.
+- At low $N_\theta = 4$, wave projection onto the 1D slice is highly clumped, causing massive gaps in the 1D spectrum and deviation in the cumulative PSD.
+- At $N_\theta \ge 16$ (FMU default), the projected spectrum tracks the isotropic target smoothly.
+
+![Ntheta Sensitivity](psd_sensitivity_Ntheta_raw_cum.png)
+
+---
+
+## Conclusion & Guidelines
+To prevent spatial discretization ripples and ensure high-fidelity vehicle dynamics simulation, a grid density of **$N_f \ge 256$** and **$N_\theta \ge 16$** is recommended.

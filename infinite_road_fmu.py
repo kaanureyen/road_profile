@@ -19,6 +19,8 @@ class InfiniteRoadFMU(Fmi2Slave):
         self.w = 2.0
         self.f_min = 0.01
         self.f_max = 10.0
+        self.Nf = 512
+        self.Ntheta = 32
         
         # Register variables for FMI interface
         self.register_variable(Real("x", causality=Fmi2Causality.input))
@@ -33,6 +35,8 @@ class InfiniteRoadFMU(Fmi2Slave):
         self.register_variable(Real("w", causality=Fmi2Causality.parameter, variability=Fmi2Variability.fixed))
         self.register_variable(Real("f_min", causality=Fmi2Causality.parameter, variability=Fmi2Variability.fixed))
         self.register_variable(Real("f_max", causality=Fmi2Causality.parameter, variability=Fmi2Variability.fixed))
+        self.register_variable(Integer("Nf", causality=Fmi2Causality.parameter, variability=Fmi2Variability.fixed))
+        self.register_variable(Integer("Ntheta", causality=Fmi2Causality.parameter, variability=Fmi2Variability.fixed))
         
         # Internal wave representation cache
         self._last_params = None
@@ -48,7 +52,7 @@ class InfiniteRoadFMU(Fmi2Slave):
         return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
     def _lazy_init(self):
-        current_params = (self.seed, self.road_class, self.Gd_n0, self.w, self.f_min, self.f_max)
+        current_params = (self.seed, self.road_class, self.Gd_n0, self.w, self.f_min, self.f_max, self.Nf, self.Ntheta)
         if self._amps is not None and self._last_params == current_params:
             return
             
@@ -75,8 +79,9 @@ class InfiniteRoadFMU(Fmi2Slave):
         # yields S_1D(f) = 2.0 * C2 * I_val * f^-w.
         C2 = C1 / (2.0 * I_val)
         
-        Nf = 512
-        Ntheta = 32
+        Nf = self.Nf
+        Ntheta = self.Ntheta
+
         
         # Logarithmic frequency spacing to capture low-frequency energy accurately
         f_r = np.logspace(np.log10(self.f_min), np.log10(self.f_max), Nf + 1)
