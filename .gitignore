@@ -37,5 +37,7 @@ fit_multiple_slices*.py
 # Keep the compiled FMU itself
 !InfiniteRoadFMU.fmu
 
-# Allow PNG files in tests directory
-!tests/*.png
+# Allow verification scripts, markdown reports, and plots in the tests folder recursively
+!tests/**/*.py
+!tests/**/*.md
+!tests/**/*.png

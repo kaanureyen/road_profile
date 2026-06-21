@@ -313,17 +313,23 @@ def main():
     plt.tight_layout()
     
     plot_name = "distance_homogeneity_curves.png"
-    # Save to tests/ directory
-    os.makedirs("tests", exist_ok=True)
-    plt.savefig(os.path.join("tests", plot_name), dpi=150)
+    # Determine directory of the script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Save locally
-    plt.savefig(plot_name, dpi=150)
+    # Save to script directory (tests/distance_homogeneity)
+    os.makedirs(script_dir, exist_ok=True)
+    plt.savefig(os.path.join(script_dir, plot_name), dpi=150)
     
-    # Save to artifacts
-    artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\bdb3005b-89b5-4dd1-a5e2-fedf6fb87855"
-    os.makedirs(artifact_dir, exist_ok=True)
-    plt.savefig(os.path.join(artifact_dir, plot_name), dpi=150)
+    # Also save to current conversation artifacts gracefully
+    artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
+    if not artifact_dir:
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\6bd8f97d-a5dd-4779-9267-df20885b87f3"
+    
+    try:
+        os.makedirs(artifact_dir, exist_ok=True)
+        plt.savefig(os.path.join(artifact_dir, plot_name), dpi=150)
+    except Exception as e:
+        print(f"Could not save to artifact directory: {e}")
     plt.close()
     
     print(f"\nHomogeneity curves plot saved to tests/{plot_name} and copied to artifacts.", flush=True)

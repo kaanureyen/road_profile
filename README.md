@@ -98,11 +98,10 @@ Consequently, the PSD of an individual slice is a **random variable**. While any
 ---
 
 ## 6. Repository Contents
-* [infinite_road_fmu.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/infinite_road_fmu.py): Python source code defining the FMU model.
-* [InfiniteRoadFMU.fmu](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/InfiniteRoadFMU.fmu): Compiled FMI 2.0 Co-Simulation compliant FMU package.
-* [test_fmu_simulation.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/test_fmu_simulation.py): FMI validation test instantiating 4 concurrent slaves.
-* [test_fmu_isotropy.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/test_fmu_isotropy.py): Multi-directional isotropy and homogeneity validation suite.
-* [.gitignore](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/.gitignore): Excludes build/extraction directories.
+* [infinite_road_fmu.py](infinite_road_fmu.py): Python source code defining the FMU model.
+* [InfiniteRoadFMU.fmu](InfiniteRoadFMU.fmu): Compiled FMI 2.0 Co-Simulation compliant FMU package.
+* [tests/](tests/): Subfolder containing analytical simulation suites, compliance tests, and diagnostic reports.
+* [.gitignore](.gitignore): Excludes build/extraction directories.
 
 ---
 
@@ -115,7 +114,7 @@ pip install pythonfmu fmpy numpy scipy matplotlib
 ```
 
 ### Rebuilding the FMU
-If you modify the source model [infinite_road_fmu.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/infinite_road_fmu.py), rebuild the FMU using:
+If you modify the source model [infinite_road_fmu.py](infinite_road_fmu.py), rebuild the FMU using:
 ```bash
 pythonfmu build -f infinite_road_fmu.py
 ```
@@ -123,5 +122,5 @@ pythonfmu build -f infinite_road_fmu.py
 ### Running Simulation Validation
 Run the test suite to verify concurrent multi-instance determinism and seed sensitivity:
 ```bash
-python test_fmu_simulation.py
+python tests/fmu_validation/test_fmu_simulation.py
 ```

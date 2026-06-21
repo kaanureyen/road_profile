@@ -35,3 +35,18 @@ To eliminate discretization and windowing tail truncation bias, we use the follo
 - $G_{\text{calibrated}} = G_{\text{fit}} \cdot 10^{w_{\text{calibrated}} - w_{\text{fit}}} \cdot 1.010491$
 
 This calibration yields average errors $< 1.5\%$ across all three road classes.
+
+## Parameter Fitting Visualizations
+
+### Case 1: Class B ($G = 64.0\ \mu\text{m}^3, w = 2.0$)
+![Case 1 Parameter Fitting](parameter_fitting_case_1.png)
+
+### Case 2: Class C ($G = 256.0\ \mu\text{m}^3, w = 1.8$)
+![Case 2 Parameter Fitting](parameter_fitting_case_2.png)
+
+### Case 3: Class D ($G = 1024.0\ \mu\text{m}^3, w = 2.2$)
+![Case 3 Parameter Fitting](parameter_fitting_case_3.png)
+
+### Summary PSD Comparison
+![Parameter Fitting Summary](parameter_fitting_summary.png)
+

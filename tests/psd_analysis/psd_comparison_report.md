@@ -4,7 +4,7 @@ This report displays the comparison of the target analytical road PSD, the Welch
 
 ## PSD Visualizations
 
-![PSD Comparison Curves](C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_comparison_curves.png)
+![PSD Comparison Curves](psd_comparison_curves.png)
 
 ### Key Observations from the Curves:
 

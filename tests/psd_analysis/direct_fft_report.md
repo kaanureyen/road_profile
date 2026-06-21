@@ -4,7 +4,7 @@ This report presents the discrete PSD calculated using a **direct FFT (Periodogr
 
 ## Direct FFT PSD Visualizations
 
-![Direct FFT PSD Comparison](/C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_direct_fft_comparison.png)
+![Direct FFT PSD Comparison](psd_direct_fft_comparison.png)
 
 ### Key Insights:
 

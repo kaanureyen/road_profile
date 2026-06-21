@@ -5,8 +5,8 @@ This document summarizes the changes, optimizations, and verification results fo
 ## Summary of Completed Tasks
 
 1. **Updated Default Discretization**:
-   - Modified [infinite_road_fmu.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/infinite_road_fmu.py) to use $N_f = 512$ and $N_\theta = 32$ by default.
-   - Rebuilt the FMU binary to [InfiniteRoadFMU.fmu](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/InfiniteRoadFMU.fmu) via `pythonfmu build -f infinite_road_fmu.py`.
+   - Modified [infinite_road_fmu.py](../infinite_road_fmu.py) to use $N_f = 512$ and $N_\theta = 32$ by default.
+   - Rebuilt the FMU binary to [InfiniteRoadFMU.fmu](../InfiniteRoadFMU.fmu) via `pythonfmu build -f infinite_road_fmu.py`.
 
 2. **1D Mathematical Simplification & Float32 Optimization**:
    - Converted the 2D sum-of-sinusoids height evaluation along the slice path:
@@ -21,13 +21,13 @@ This document summarizes the changes, optimizations, and verification results fo
    - Distributing the slices across logical CPU cores yields a **10x execution speedup** (e.g. running 10 slices in parallel takes ~80 seconds instead of ~13 minutes).
 
 4. **Distance Homogeneity Test Case**:
-   - Created [test_distance_homogeneity.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/test_distance_homogeneity.py) to simulate random starting headings (distance offset from origin) and running directions.
+   - Created [test_distance_homogeneity.py](distance_homogeneity/test_distance_homogeneity.py) to simulate random starting headings (distance offset from origin) and running directions.
    - Fits the direct Hanning FFT cumulative PSD to the exact isotropic projection model using a decimated grid of 100 points in $[0.02, 200.0]$ cycles/m.
    - Compares offsets of **0 km, 1 km, 10 km, and 100 km** from the origin.
-   - Saves the comparative curves to [distance_homogeneity_curves.png](distance_homogeneity_curves.png).
+   - Saves the comparative curves to [distance_homogeneity_curves.png](distance_homogeneity/distance_homogeneity_curves.png).
 
 5. **Updated Fitting Benchmark**:
-   - Updated [test_parameter_fitting.py](file:///C:/Users/novo/.gemini/antigravity/scratch/road_profile/test_parameter_fitting.py) to match the new direct Hanning FFT model with Nf=512, Ntheta=32 defaults, and parallel execution.
+   - Updated [test_parameter_fitting.py](parameter_fitting/test_parameter_fitting.py) to match the new direct Hanning FFT model with Nf=512, Ntheta=32 defaults, and parallel execution.
    - Re-generated the 3 road class fitting reports and isotropy dependency plots.
 
 ---
@@ -71,10 +71,10 @@ Evaluating 10 random slices per road class using the $512 \times 32$ discretizat
 
 ## Artifacts Generated
 
-- Comparative curves plot: [distance_homogeneity_curves.png](distance_homogeneity_curves.png)
+- Comparative curves plot: [distance_homogeneity_curves.png](distance_homogeneity/distance_homogeneity_curves.png)
 - Local fitting dependency plots:
-  - [parameter_fitting_case_1.png](parameter_fitting_case_1.png)
-  - [parameter_fitting_case_2.png](parameter_fitting_case_2.png)
-  - [parameter_fitting_case_3.png](parameter_fitting_case_3.png)
-  - [parameter_fitting_summary.png](parameter_fitting_summary.png)
-- Parameter fitting analysis report: [parameter_fitting_analysis.md](parameter_fitting_analysis.md)
+  - [parameter_fitting_case_1.png](parameter_fitting/parameter_fitting_case_1.png)
+  - [parameter_fitting_case_2.png](parameter_fitting/parameter_fitting_case_2.png)
+  - [parameter_fitting_case_3.png](parameter_fitting/parameter_fitting_case_3.png)
+  - [parameter_fitting_summary.png](parameter_fitting/parameter_fitting_summary.png)
+- Parameter fitting analysis report: [parameter_fitting_analysis.md](parameter_fitting/parameter_fitting_analysis.md)

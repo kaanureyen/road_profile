@@ -6,10 +6,13 @@ from fmpy.fmi2 import FMU2Slave
 
 def main():
     fmu_filename = "InfiniteRoadFMU.fmu"
-    
     if not os.path.exists(fmu_filename):
-        print(f"Error: {fmu_filename} not found!")
-        return
+        candidate = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", fmu_filename))
+        if os.path.exists(candidate):
+            fmu_filename = candidate
+        else:
+            print(f"Error: {fmu_filename} not found!")
+            return
 
     print("=== READING FMU MODEL DESCRIPTION ===")
     model_description = read_model_description(fmu_filename)

@@ -15,7 +15,7 @@ This report validates the deterministic 2D isotropic road profile generator unde
 ### Parameter Plots (Infinite vs. Truncated Cumulative PSD)
 The subplots below show how the cumulative PSD tracks the target curves for each parameter configuration:
 
-![Parameter Comparison](C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_multi_params.png)
+![Parameter Comparison](psd_multi_params.png)
 
 > [!NOTE]
 > **Tail Drop-Off Effect:** Slicing through the 2D surface truncates the high-frequency integration tail. As a result, the physical cumulative PSD (blue) drops below the infinite theoretical model (red) near the high-frequency cutoff. The exact model (green) matches the physical curve perfectly because it integrates up to $2000.0\text{ cycles/m}$ only.
@@ -26,7 +26,7 @@ The subplots below show how the cumulative PSD tracks the target curves for each
 
 The number of radial frequency bins $N_f$ defines how densely the log-spaced wave rings are generated. We evaluated the sensitivity of the raw PSD and cumulative PSD for $N_f \in \{16, 64, 256, 1024\}$ (keeping $N_\theta = 16$ constant):
 
-![Nf Sensitivity](C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_sensitivity_Nf_raw_cum.png)
+![Nf Sensitivity](psd_sensitivity_Nf_raw_cum.png)
 
 ### Key Observations:
 1. **Raw PSD (Left):**
@@ -44,7 +44,7 @@ The number of radial frequency bins $N_f$ defines how densely the log-spaced wav
 
 The number of angular bins $N_\theta$ defines how many directions are used to distribute the wave components over the $2\pi$ circle. We evaluated the sensitivity of the raw PSD and cumulative PSD for $N_\theta \in \{4, 8, 16, 64\}$ (keeping $N_f = 64$ constant):
 
-![Ntheta Sensitivity](C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_sensitivity_Ntheta_raw_cum.png)
+![Ntheta Sensitivity](psd_sensitivity_Ntheta_raw_cum.png)
 
 ### Key Observations:
 1. **Raw PSD (Left):**

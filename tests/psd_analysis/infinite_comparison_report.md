@@ -6,7 +6,7 @@ This report compares the Welch cumulative PSD estimated from a **10,000m slice**
 
 ## PSD Visualizations
 
-![Infinite PSD Comparison](C:/Users/novo/.gemini/antigravity/brain/bdb3005b-89b5-4dd1-a5e2-fedf6fb87855/psd_infinite_comparison.png)
+![Infinite PSD Comparison](psd_infinite_comparison.png)
 
 ### Key Observations:
 

@@ -304,8 +304,16 @@ def main():
         {'G': 1024e-6, 'w': 2.2}   # Case 3: Class D, w=2.2
     ]
     
-    artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\bdb3005b-89b5-4dd1-a5e2-fedf6fb87855"
-    os.makedirs(artifact_dir, exist_ok=True)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(script_dir, exist_ok=True)
+    
+    artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
+    if not artifact_dir:
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\6bd8f97d-a5dd-4779-9267-df20885b87f3"
+    try:
+        os.makedirs(artifact_dir, exist_ok=True)
+    except Exception:
+        pass
     
     workers = min(10, os.cpu_count())
     print(f"Running cases on {workers} parallel workers.", flush=True)
@@ -315,23 +323,20 @@ def main():
         res = run_fitting_case(case['G'], case['w'], num_slices=10, slice_length=500.0, dx=0.002, seed=200+idx, workers=workers)
         results.append(res)
         
-        # Create tests dir
-        os.makedirs("tests", exist_ok=True)
-        
-        # Plot local case results
         local_plot_name = f"parameter_fitting_case_{idx+1}.png"
-        plot_case_results(res, local_plot_name)
-        print(f"Saved local plot to {local_plot_name}", flush=True)
         
-        # Save to tests dir
-        tests_plot_path = os.path.join("tests", local_plot_name)
-        plot_case_results(res, tests_plot_path)
-        print(f"Saved plot to tests dir: {tests_plot_path}", flush=True)
+        # Save to script dir (tests/parameter_fitting)
+        script_plot_path = os.path.join(script_dir, local_plot_name)
+        plot_case_results(res, script_plot_path)
+        print(f"Saved plot to script dir: {script_plot_path}", flush=True)
         
         # Copy to artifact dir
-        artifact_plot_path = os.path.join(artifact_dir, local_plot_name)
-        plot_case_results(res, artifact_plot_path)
-        print(f"Copied plot to artifact dir: {artifact_plot_path}", flush=True)
+        try:
+            artifact_plot_path = os.path.join(artifact_dir, local_plot_name)
+            plot_case_results(res, artifact_plot_path)
+            print(f"Copied plot to artifact dir: {artifact_plot_path}", flush=True)
+        except Exception as e:
+            print(f"Could not save to artifact directory: {e}")
         
     # Generate a combined summary PSD comparison plot
     print("\nGenerating combined PSD summary plot...", flush=True)
@@ -376,60 +381,81 @@ def main():
         if idx == 0:
             ax.legend(loc='lower left')
             
-    plt.tight_layout()
     summary_plot_local = "parameter_fitting_summary.png"
-    plt.savefig(summary_plot_local, dpi=150)
-    plt.savefig(os.path.join("tests", summary_plot_local), dpi=150)
-    plt.savefig(os.path.join(artifact_dir, summary_plot_local), dpi=150)
+    script_summary_path = os.path.join(script_dir, summary_plot_local)
+    plt.savefig(script_summary_path, dpi=150)
+    print(f"Saved summary PSD plot to script dir: {script_summary_path}", flush=True)
+    
+    try:
+        artifact_summary_path = os.path.join(artifact_dir, summary_plot_local)
+        plt.savefig(artifact_summary_path, dpi=150)
+    except Exception as e:
+        print(f"Could not save summary plot to artifact directory: {e}")
     plt.close()
-    print(f"Saved summary PSD plot to tests/{summary_plot_local}", flush=True)
     
-    # Save text summary report as a markdown artifact
+    # Save text summary report
+    script_text_path = os.path.join(script_dir, "parameter_fitting_analysis.md")
     summary_text_path = os.path.join(artifact_dir, "parameter_fitting_analysis.md")
-    tests_text_path = os.path.join("tests", "parameter_fitting_analysis.md")
     
-    for filepath in [summary_text_path, tests_text_path]:
-        with open(filepath, 'w', encoding='utf-8') as f:
-        f.write("# FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)\n\n")
-        f.write("This report validates the deterministic 2D isotropic road profile generator ")
-        f.write("defined in the `InfiniteRoadFMU` class by querying **10 random line segments** ")
-        f.write("of length **500m** with spacing **0.002m** (250,000 points per slice) from random positions ")
-        f.write("within a $[-5000, 5000]$ m plane and random slice angles.\n\n")
+    filepaths_to_write = [script_text_path]
+    if os.path.exists(artifact_dir) or (os.path.dirname(artifact_dir) and os.path.exists(os.path.dirname(artifact_dir))):
+        filepaths_to_write.append(summary_text_path)
         
-        f.write("## Method Comparison: Raw PSD vs. Cumulative PSD Fitting\n\n")
-        f.write("1. **Raw PSD Fitting (Log-Log Polyfit)**:\n")
-        f.write("   - The road profile is generated using a discrete sum of sinusoids ($N_f=512$, $N_\\theta=32$) at logarithmic frequencies.\n")
-        f.write("   - Slicing through these discrete wave components produces a discrete line spectrum. ")
-        f.write("On a linear grid, many bins are empty (having almost zero power except window side-lobe leakage).\n")
-        f.write("   - Performing a linear fit on $\\ln(\\text{PSD})$ vs $\\ln(f)$ is severely biased by these empty bins, resulting in a high exponent estimate.\n\n")
-        
-        f.write("2. **Cumulative PSD Fitting (Recommended)**:\n")
-        f.write("   - By integrating the FFT PSD from high to low frequencies, we calculate the cumulative power $\\Phi(f) = \\sum_{f_k \\ge f} \\text{psd}(f_k) \\cdot df$, which represents the residual height variance above frequency $f$.\n")
-        f.write("   - The cumulative function $\\Phi(f)$ is smooth, monotonic, and immune to empty-bin spikes.\n")
-        f.write("   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates once calibrated.\n\n")
-        
-        f.write("## Summary Table (Calibrated Cumulative PSD Method)\n\n")
-        f.write("| Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\\mu$m³) | Fitted Mean $G$ ($\\mu$m³) | Exponent Error | Roughness Error |\n")
-        f.write("|---|---|---|---|---|---|---|\n")
-        
-        for idx, res in enumerate(results):
-            w_mean = np.mean(res['w_fits_cum'])
-            G_mean = np.mean(res['G_fits_cum'])
-            w_err = np.abs(w_mean - res['w_target']) / res['w_target'] * 100
-            G_err = np.abs(G_mean - res['G_target']) / res['G_target'] * 100
-            f.write(f"| Case {idx+1} | {res['w_target']:.2f} | {w_mean:.4f} \u00b1 {np.std(res['w_fits_cum']):.4f} | {res['G_target']*1e6:.1f} | {G_mean*1e6:.2f} \u00b1 {np.std(res['G_fits_cum'])*1e6:.2f} | {w_err:.2f}% | {G_err:.2f}% |\n")
-            
-        f.write("\n\n## Mathematical Verification and Scaling Calibration\n")
-        f.write("> [!IMPORTANT]\n")
-        f.write("> The FMU scaling coefficient $C_2$ has been corrected by changing the denominator from $4.0$ to $2.0$:\n")
-        f.write("> $$C_2 = \\frac{C_1}{2.0 \\cdot I(\\alpha)}$$\n")
-        f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.002, f_{\\max} = 2000.0, Nf = 512, N\\theta = 32, dx = 0.002$).\n\n")
-        
-        f.write("### Calibration Parameters\n")
-        f.write("To eliminate discretization and windowing tail truncation bias, we use the following calibration linear mappings:\n")
-        f.write("- $w_{\\text{calibrated}} = 0.987182 \\cdot w_{\\text{fit}} + 0.031089$\n")
-        f.write("- $G_{\\text{calibrated}} = G_{\\text{fit}} \\cdot 10^{w_{\\text{calibrated}} - w_{\\text{fit}}} \\cdot 1.010491$\n\n")
-        f.write("This calibration yields average errors $< 1.5\\%$ across all three road classes.\n")
+    for filepath in filepaths_to_write:
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("# FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)\n\n")
+                f.write("This report validates the deterministic 2D isotropic road profile generator ")
+                f.write("defined in the `InfiniteRoadFMU` class by querying **10 random line segments** ")
+                f.write("of length **500m** with spacing **0.002m** (250,000 points per slice) from random positions ")
+                f.write("within a $[-5000, 5000]$ m plane and random slice angles.\n\n")
+                
+                f.write("## Method Comparison: Raw PSD vs. Cumulative PSD Fitting\n\n")
+                f.write("1. **Raw PSD Fitting (Log-Log Polyfit)**:\n")
+                f.write("   - The road profile is generated using a discrete sum of sinusoids ($N_f=512$, $N_\\theta=32$) at logarithmic frequencies.\n")
+                f.write("   - Slicing through these discrete wave components produces a discrete line spectrum. ")
+                f.write("On a linear grid, many bins are empty (having almost zero power except window side-lobe leakage).\n")
+                f.write("   - Performing a linear fit on $\\ln(\\text{PSD})$ vs $\\ln(f)$ is severely biased by these empty bins, resulting in a high exponent estimate.\n\n")
+                
+                f.write("2. **Cumulative PSD Fitting (Recommended)**:\n")
+                f.write("   - By integrating the FFT PSD from high to low frequencies, we calculate the cumulative power $\\Phi(f) = \\sum_{f_k \\ge f} \\text{psd}(f_k) \\cdot df$, which represents the residual height variance above frequency $f$.\n")
+                f.write("   - The cumulative function $\\Phi(f)$ is smooth, monotonic, and immune to empty-bin spikes.\n")
+                f.write("   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates once calibrated.\n\n")
+                
+                f.write("## Summary Table (Calibrated Cumulative PSD Method)\n\n")
+                f.write("| Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\\mu$m³) | Fitted Mean $G$ ($\\mu$m³) | Exponent Error | Roughness Error |\n")
+                f.write("|---|---|---|---|---|---|---|\n")
+                
+                for idx, res in enumerate(results):
+                    w_mean = np.mean(res['w_fits_cum'])
+                    G_mean = np.mean(res['G_fits_cum'])
+                    w_err = np.abs(w_mean - res['w_target']) / res['w_target'] * 100
+                    G_err = np.abs(G_mean - res['G_target']) / res['G_target'] * 100
+                    f.write(f"| Case {idx+1} | {res['w_target']:.2f} | {w_mean:.4f} \u00b1 {np.std(res['w_fits_cum']):.4f} | {res['G_target']*1e6:.1f} | {G_mean*1e6:.2f} \u00b1 {np.std(res['G_fits_cum'])*1e6:.2f} | {w_err:.2f}% | {G_err:.2f}% |\n")
+                    
+                f.write("\n\n## Mathematical Verification and Scaling Calibration\n")
+                f.write("> [!IMPORTANT]\n")
+                f.write("> The FMU scaling coefficient $C_2$ has been corrected by changing the denominator from $4.0$ to $2.0$:\n")
+                f.write("> $$C_2 = \\frac{C_1}{2.0 \\cdot I(\\alpha)}$$\n")
+                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.002, f_{\\max} = 2000.0, Nf = 512, N\\theta = 32, dx = 0.002$).\n\n")
+                
+                f.write("### Calibration Parameters\n")
+                f.write("To eliminate discretization and windowing tail truncation bias, we use the following calibration linear mappings:\n")
+                f.write("- $w_{\\text{calibrated}} = 0.987182 \\cdot w_{\\text{fit}} + 0.031089$\n")
+                f.write("- $G_{\\text{calibrated}} = G_{\\text{fit}} \\cdot 10^{w_{\\text{calibrated}} - w_{\\text{fit}}} \\cdot 1.010491$\n\n")
+                f.write("This calibration yields average errors $< 1.5\\%$ across all three road classes.\n\n")
+                
+                f.write("## Parameter Fitting Visualizations\n\n")
+                f.write("### Case 1: Class B ($G = 64.0\\ \\mu\\text{m}^3, w = 2.0$)\n")
+                f.write("![Case 1 Parameter Fitting](parameter_fitting_case_1.png)\n\n")
+                f.write("### Case 2: Class C ($G = 256.0\\ \\mu\\text{m}^3, w = 1.8$)\n")
+                f.write("![Case 2 Parameter Fitting](parameter_fitting_case_2.png)\n\n")
+                f.write("### Case 3: Class D ($G = 1024.0\\ \\mu\\text{m}^3, w = 2.2$)\n")
+                f.write("![Case 3 Parameter Fitting](parameter_fitting_case_3.png)\n\n")
+                f.write("### Summary PSD Comparison\n")
+                f.write("![Parameter Fitting Summary](parameter_fitting_summary.png)\n\n")
+        except Exception as e:
+            print(f"Could not write to {filepath}: {e}")
 
 if __name__ == "__main__":
     main()
