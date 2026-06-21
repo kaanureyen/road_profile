@@ -315,10 +315,18 @@ def main():
         res = run_fitting_case(case['G'], case['w'], num_slices=10, slice_length=500.0, dx=0.002, seed=200+idx, workers=workers)
         results.append(res)
         
+        # Create tests dir
+        os.makedirs("tests", exist_ok=True)
+        
         # Plot local case results
         local_plot_name = f"parameter_fitting_case_{idx+1}.png"
         plot_case_results(res, local_plot_name)
         print(f"Saved local plot to {local_plot_name}", flush=True)
+        
+        # Save to tests dir
+        tests_plot_path = os.path.join("tests", local_plot_name)
+        plot_case_results(res, tests_plot_path)
+        print(f"Saved plot to tests dir: {tests_plot_path}", flush=True)
         
         # Copy to artifact dir
         artifact_plot_path = os.path.join(artifact_dir, local_plot_name)
@@ -371,13 +379,17 @@ def main():
     plt.tight_layout()
     summary_plot_local = "parameter_fitting_summary.png"
     plt.savefig(summary_plot_local, dpi=150)
+    plt.savefig(os.path.join("tests", summary_plot_local), dpi=150)
     plt.savefig(os.path.join(artifact_dir, summary_plot_local), dpi=150)
     plt.close()
-    print(f"Saved summary PSD plot to {summary_plot_local}", flush=True)
+    print(f"Saved summary PSD plot to tests/{summary_plot_local}", flush=True)
     
     # Save text summary report as a markdown artifact
     summary_text_path = os.path.join(artifact_dir, "parameter_fitting_analysis.md")
-    with open(summary_text_path, 'w', encoding='utf-8') as f:
+    tests_text_path = os.path.join("tests", "parameter_fitting_analysis.md")
+    
+    for filepath in [summary_text_path, tests_text_path]:
+        with open(filepath, 'w', encoding='utf-8') as f:
         f.write("# FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)\n\n")
         f.write("This report validates the deterministic 2D isotropic road profile generator ")
         f.write("defined in the `InfiniteRoadFMU` class by querying **10 random line segments** ")

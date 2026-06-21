@@ -313,14 +313,20 @@ def main():
     plt.tight_layout()
     
     plot_name = "distance_homogeneity_curves.png"
+    # Save to tests/ directory
+    os.makedirs("tests", exist_ok=True)
+    plt.savefig(os.path.join("tests", plot_name), dpi=150)
+    
+    # Save locally
     plt.savefig(plot_name, dpi=150)
     
+    # Save to artifacts
     artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\bdb3005b-89b5-4dd1-a5e2-fedf6fb87855"
     os.makedirs(artifact_dir, exist_ok=True)
     plt.savefig(os.path.join(artifact_dir, plot_name), dpi=150)
     plt.close()
     
-    print(f"\nHomogeneity curves plot saved to {plot_name} and copied to artifacts.", flush=True)
+    print(f"\nHomogeneity curves plot saved to tests/{plot_name} and copied to artifacts.", flush=True)
     
     # Verify overall criteria
     passed_all = True
