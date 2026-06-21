@@ -14,7 +14,20 @@ This report validates the deterministic 2D isotropic road profile generator defi
    - The cumulative function $\Phi(f)$ is smooth, monotonic, and immune to empty-bin spikes.
    - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates once calibrated.
 
+## FMU Parameters Used
+- **`seed`**: `200 + case_idx + slice_idx` (reproducible seed per slice)
+- **`road_class`**: `0` (custom $G_d(n_0)$ targets)
+- **`f_min`**: `0.002` (lower cutoff frequency)
+- **`f_max`**: `2000.0` (upper cutoff frequency)
+- **`Nf`**: `512` (radial frequency rings)
+- **`Ntheta`**: `32` (angular divisions)
+- **`Gd_n0` and `w` targets per case:**
+  - **Case 1 (Class B):** `Gd_n0` = `64e-6` ($64\ \mu\text{m}^3$), `w` = `2.0`
+  - **Case 2 (Class C):** `Gd_n0` = `256e-6` ($256\ \mu\text{m}^3$), `w` = `1.8`
+  - **Case 3 (Class D):** `Gd_n0` = `1024e-6` ($1024\ \mu\text{m}^3$), `w` = `2.2`
+
 ## Summary Table (Calibrated Cumulative PSD Method)
+
 
 | Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\mu$m³) | Fitted Mean $G$ ($\mu$m³) | Exponent Error | Roughness Error |
 |---|---|---|---|---|---|---|

@@ -8,6 +8,16 @@ This report presents the FMI co-simulation compliance, multi-wheel query safety,
 - **Evaluation Length:** 20 m
 - **Query Resolution:** 500 evaluation points
 
+## FMU Parameters Used
+- **`seed`**: `42` (for concurrent instances 1-4), `99` (for realization check)
+- **`road_class`**: `2` (mapped to Class B target $G_d(n_0) = 64\times 10^{-6}\text{ m}^3$)
+- **`Gd_n0`**: `64e-6` (inactive because `road_class` is non-zero)
+- **`w`**: `2.0` (standard ISO exponent)
+- **`f_min`**: `0.01` (lower cutoff frequency)
+- **`f_max`**: `10.0` (upper cutoff frequency)
+- **`Nf`**: `512` (radial frequency rings)
+- **`Ntheta`**: `32` (angular divisions)
+
 ## Test Results and Visualizations
 
 The validation tests check the following three key criteria:
