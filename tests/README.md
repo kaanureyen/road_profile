@@ -44,6 +44,30 @@ Every test suite is organized into its own subdirectory containing a `README.md`
 
 ---
 
+## Summary of Used FMU Parameters
+
+The table below summarizes the exact FMI variables set on the FMU for each of the test scenarios:
+
+| Test Suite / Scenario | `seed` | `road_class` | `Gd_n0` ($m^3$) | `w` | `f_min` (c/m) | `f_max` (c/m) | `Nf` | `Ntheta` |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **FMI Simulation (Wheel 1-4)** | `42` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **FMI Simulation (Sensitivity)** | `99` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **Distance Homogeneity** | `dist + slice_idx + 2026` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **Parameter Fitting (Case 1)** | `200 + slice_idx` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **Parameter Fitting (Case 2)** | `201 + slice_idx` | `0` (Custom) | `256e-6` | `1.8` | `0.002` | `2000.0` | `512` | `32` |
+| **Parameter Fitting (Case 3)** | `202 + slice_idx` | `0` (Custom) | `1024e-6` | `2.2` | `0.002` | `2000.0` | `512` | `32` |
+| **Direct FFT Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
+| **Infinite Model Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
+| **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
+| **Parameter Sweep Case 1** | `42` | `0` (Custom) | `4e-6` | `1.5` | `0.002` | `2000.0` | `64` | `16` |
+| **Parameter Sweep Case 2** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
+| **Parameter Sweep Case 3** | `42` | `0` (Custom) | `256e-6` | `3.0` | `0.002` | `2000.0` | `64` | `16` |
+| **Parameter Sweep Case 4** | `42` | `0` (Custom) | `16384e-6` | `4.5` | `0.002` | `2000.0` | `64` | `16` |
+| **Grid Sensitivity ($N_f$ Sweep)** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `16` to `1024` | `16` |
+| **Grid Sensitivity ($N_\theta$ Sweep)** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `4` to `64` |
+
+---
+
 ## Run All Verification Tests
 
 Execute the runner script in the repository root to automatically run all the verification scripts in sequence and regenerate all output plots and markdown reports:
