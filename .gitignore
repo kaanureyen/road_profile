@@ -41,3 +41,6 @@ fit_multiple_slices*.py
 !tests/**/*.py
 !tests/**/*.md
 !tests/**/*.png
+
+# C++ build directories
+cpp_fmu/build/
