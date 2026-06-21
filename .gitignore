@@ -36,3 +36,6 @@ fit_multiple_slices*.py
 
 # Keep the compiled FMU itself
 !InfiniteRoadFMU.fmu
+
+# Allow PNG files in tests directory
+!tests/*.png
