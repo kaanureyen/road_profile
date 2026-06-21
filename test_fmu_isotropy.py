@@ -209,7 +209,8 @@ def main():
     # cannot resolve any frequencies below 1/102.4 = 0.0098 cycles/m. Fitting below this limit
     # introduces statistical leakage and bias from the Welch window.
     f_fit_min = 0.01
-    fit_idx = (freqs_welch >= f_fit_min) & (freqs_welch <= f_max)
+    f_fit_max = 20.0
+    fit_idx = (freqs_welch >= f_fit_min) & (freqs_welch <= f_fit_max)
     
     B_fits = []
     Gd_n0_fits = []
@@ -287,6 +288,12 @@ def main():
     ax2.legend()
     ax2.grid(True, which="both", linestyle='--', alpha=0.5)
     
+    # Set dynamic y-limits for Plots 3 & 4 to prevent empty/broken graphs
+    w_min = np.min(B_fits)
+    w_max = np.max(B_fits)
+    y_lim_min = min(w_target - 0.2, w_min - 0.1)
+    y_lim_max = max(w_target + 0.2, w_max + 0.1)
+    
     # Plot 3: Fitted w vs Angle (Isotropy)
     ax3 = fig.add_subplot(2, 2, 3)
     angles = []
@@ -302,7 +309,7 @@ def main():
     ax3.set_title("Exponent w vs. Slice Angle (Isotropy)")
     ax3.set_xlabel("Slice Angle (degrees)")
     ax3.set_ylabel("Fitted Exponent w")
-    ax3.set_ylim(w_target - 0.4, w_target + 0.4)
+    ax3.set_ylim(y_lim_min, y_lim_max)
     ax3.legend()
     ax3.grid(True, linestyle='--', alpha=0.5)
     
@@ -314,7 +321,7 @@ def main():
     ax4.set_title("Exponent w vs. Distance from Origin (Homogeneity)")
     ax4.set_xlabel("Starting Point Distance (m)")
     ax4.set_ylabel("Fitted Exponent w")
-    ax4.set_ylim(w_target - 0.4, w_target + 0.4)
+    ax4.set_ylim(y_lim_min, y_lim_max)
     ax4.grid(True, linestyle='--', alpha=0.5)
     
     plt.tight_layout()
