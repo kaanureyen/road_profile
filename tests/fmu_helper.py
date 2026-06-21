@@ -22,7 +22,7 @@ class FMURoadQuery:
         if hasattr(self, 'unzipdir') and os.path.exists(self.unzipdir):
             shutil.rmtree(self.unzipdir, ignore_errors=True)
 
-    def get_slave(self, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.01, f_max=10.0, Nf=512, Ntheta=32, road_class=0, instance_name="fmu_instance"):
+    def get_slave(self, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.002, f_max=2000.0, Nf=512, Ntheta=32, road_class=0, instance_name="fmu_instance"):
         slave = FMU2Slave(
             guid=self.guid,
             unzipDirectory=self.unzipdir,
@@ -66,3 +66,45 @@ class FMURoadQuery:
                 slave.setReal([x_ref, y_ref], [float(px[i]), float(py[i])])
                 z[i] = slave.getReal([z_ref])[0]
             return z
+
+    def query_profile_parallel(self, px, py, num_threads=8, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.002, f_max=2000.0, Nf=512, Ntheta=32, road_class=0):
+        """Query coordinates px, py in parallel using multiple FMI slave instances."""
+        from concurrent.futures import ThreadPoolExecutor
+        
+        n_points = len(px)
+        chunk_size = int(np.ceil(n_points / num_threads))
+        z = np.zeros(n_points)
+        
+        def worker(thread_idx):
+            start_idx = thread_idx * chunk_size
+            end_idx = min(start_idx + chunk_size, n_points)
+            if start_idx >= end_idx:
+                return
+                
+            slave = self.get_slave(
+                seed=seed, Gd_n0=Gd_n0, w=w, f_min=f_min, f_max=f_max,
+                Nf=Nf, Ntheta=Ntheta, road_class=road_class,
+                instance_name=f"parallel_slave_{thread_idx}"
+            )
+            
+            x_ref = self.var_refs['x']
+            y_ref = self.var_refs['y']
+            z_ref = self.var_refs['z']
+            
+            x_vals = px[start_idx:end_idx]
+            y_vals = py[start_idx:end_idx]
+            z_vals = np.zeros(len(x_vals))
+            
+            for i in range(len(x_vals)):
+                slave.setReal([x_ref, y_ref], [float(x_vals[i]), float(y_vals[i])])
+                z_vals[i] = slave.getReal([z_ref])[0]
+                
+            z[start_idx:end_idx] = z_vals
+            
+            slave.terminate()
+            slave.freeInstance()
+            
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            list(executor.map(worker, range(num_threads)))
+            
+        return z

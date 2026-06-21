@@ -34,6 +34,8 @@ def main():
         "tests/psd_analysis/plot_direct_fft.py",
         "tests/psd_analysis/plot_infinite_comparison.py",
         "tests/psd_analysis/plot_psd_comparison.py",
+        "tests/psd_analysis/plot_amplitude_frequency.py",
+        "tests/psd_analysis/plot_terrain_surface.py",
         "tests/psd_analysis/run_advanced_sensitivity.py",
         "tests/psd_analysis/run_advanced_analysis.py"
     ]
@@ -61,6 +63,8 @@ def main():
         print("  - tests/psd_analysis/psd_sensitivity_Ntheta_raw_cum.png")
         print("  - tests/psd_analysis/psd_multi_params.png")
         print("  - tests/psd_analysis/psd_sensitivity_Nf.png")
+        print("  - tests/psd_analysis/psd_amplitude_frequency.png")
+        print("  - tests/psd_analysis/road_terrain_500x500.png")
         print("  - tests/psd_analysis/advanced_psd_analysis.md")
         sys.exit(0)
     else:

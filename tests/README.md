@@ -36,11 +36,13 @@ Every test suite is organized into its own subdirectory containing a `README.md`
   - [`plot_direct_fft.py`](psd_analysis/plot_direct_fft.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`plot_infinite_comparison.py`](psd_analysis/plot_infinite_comparison.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`plot_psd_comparison.py`](psd_analysis/plot_psd_comparison.py) (**FMU Used: Yes**, via `fmu_helper.py`)
+  - [`plot_amplitude_frequency.py`](psd_analysis/plot_amplitude_frequency.py) (**FMU Used: Yes**, via `fmu_helper.py`)
+  - [`plot_terrain_surface.py`](psd_analysis/plot_terrain_surface.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`run_advanced_analysis.py`](psd_analysis/run_advanced_analysis.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`run_advanced_sensitivity.py`](psd_analysis/run_advanced_sensitivity.py) (**FMU Used: Yes**, via `fmu_helper.py`)
 - **Report:** [PSD Analysis Master Report](psd_analysis/README.md)
 - **Validates:** Frequency grid rings ($N_f$) and angular division ($N_\theta$) discretization sensitivities on the actual FMU, periodogram discretization valleys, and infinite vs. band-limited model truncation.
-- **Result Plots:** Multiple sensitivity curves (raw vs. cumulative PSD) saved in `tests/psd_analysis/`.
+- **Result Plots:** Multiple sensitivity curves and visualization profiles saved in `tests/psd_analysis/`.
 
 ---
 
@@ -59,6 +61,8 @@ The table below summarizes the exact FMI variables set on the FMU for each of th
 | **Direct FFT Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **Infinite Model Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **FFT Amplitude/Frequency** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **Terrain Elevation Plot** | `42` | `3` (Class C) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **Parameter Sweep Case 1** | `42` | `0` (Custom) | `4e-6` | `1.5` | `0.002` | `2000.0` | `64` | `16` |
 | **Parameter Sweep Case 2** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
 | **Parameter Sweep Case 3** | `42` | `0` (Custom) | `256e-6` | `3.0` | `0.002` | `2000.0` | `64` | `16` |
