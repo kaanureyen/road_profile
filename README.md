@@ -98,8 +98,8 @@ Using this corrected continuous scaling coefficient, the average PSD of the proj
 * `road_class` (Integer, default = 3): ISO 8608 Class (1=A, 2=B, 3=C, 4=D, 5=E, 0=Custom Gd_n0).
 * `Gd_n0` (Real, default = 256e-6 $\text{m}^3$): Reference displacement PSD at $n_0=0.1$ cycles/m (active when `road_class=0`).
 * `w` (Real, default = 2.0): Spectral exponent.
-* `f_min` (Real, default = 0.01 cycles/m): Lower frequency cutoff.
-* `f_max` (Real, default = 10.0 cycles/m): Upper frequency cutoff.
+* `f_min` (Real, default = 0.002 cycles/m): Lower frequency cutoff.
+* `f_max` (Real, default = 2000.0 cycles/m): Upper frequency cutoff.
 
 ---
 
