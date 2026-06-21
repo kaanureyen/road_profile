@@ -70,14 +70,13 @@ class InfiniteRoadFMU(Fmi2Slave):
         I_val = self._get_I(alpha)
         
         # Corrected continuous scaling coefficient C2:
-        # C2 = C1 / (4.0 * I_val)
-        # We use 4.0 in the denominator because our sum-of-sinusoids model generates independent random
-        # phases for all angles in [0, 2pi), meaning opposite directions (theta and theta + pi) are
-        # uncorrelated, which doubles the projected variance compared to a conjugate symmetric FFT.
-        C2 = C1 / (4.0 * I_val)
+        # C2 = C1 / (2.0 * I_val)
+        # We use 2.0 in the denominator because the 1D slice projection of the 2D wave field
+        # yields S_1D(f) = 2.0 * C2 * I_val * f^-w.
+        C2 = C1 / (2.0 * I_val)
         
-        Nf = 64
-        Ntheta = 16
+        Nf = 512
+        Ntheta = 32
         
         # Logarithmic frequency spacing to capture low-frequency energy accurately
         f_r = np.logspace(np.log10(self.f_min), np.log10(self.f_max), Nf + 1)
