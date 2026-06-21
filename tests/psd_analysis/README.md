@@ -18,7 +18,7 @@ Integrating the PSD from high to low frequencies yields the cumulative power cur
 - **`Gd_n0`**: `64e-6` ($64\ \mu\text{m}^3$, Class B target)
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
-- **`f_max`**: `20.0` cycles/m
+- **`f_max`**: `2000.0` cycles/m
 - **`Nf`**: `64`
 - **`Ntheta`**: `16`
 
@@ -37,7 +37,7 @@ Below $f_{\min} = 0.002$ cycles/m, no waves are generated, so the physical cumul
 - **`Gd_n0`**: `64e-6` ($64\ \mu\text{m}^3$, Class B target)
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
-- **`f_max`**: `20.0` cycles/m
+- **`f_max`**: `2000.0` cycles/m
 - **`Nf`**: `64`
 - **`Ntheta`**: `16`
 
@@ -54,7 +54,7 @@ This plot compares the continuous target ISO 8608 PSD against the Welch-estimate
 - **`Gd_n0`**: `64e-6` ($64\ \mu\text{m}^3$, Class B target)
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
-- **`f_max`**: `20.0` cycles/m
+- **`f_max`**: `2000.0` cycles/m
 - **`Nf`**: `64`
 - **`Ntheta`**: `16`
 

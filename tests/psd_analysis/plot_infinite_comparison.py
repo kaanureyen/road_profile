@@ -37,7 +37,7 @@ def exact_isotropic_cum_model(f_array, C1, w):
     I_val = get_I(alpha)
     results = []
     for f_val in f_array:
-        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 20.0)
+        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 2000.0)
         results.append(C1 * (2.0 / I_val) * val)
     return np.array(results)
 
@@ -47,7 +47,7 @@ def main():
     
     # Initialize FMU query helper
     fmu_query = FMURoadQuery()
-    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=20.0, Nf=64, Ntheta=16)
+    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=64, Ntheta=16)
     
     # 10,000 meters slice to resolve frequencies down to 0.0001 cycles/m
     slice_length = 10000.0
@@ -96,8 +96,8 @@ def main():
     # Infinite Theoretical Cumulative curve
     plt.loglog(freqs, infinite_cum, color='red', linestyle='--', linewidth=2, label='Infinite Theoretical Model (No Cutoff)')
     
-    # Exact Cumulative Model (Truncated at 20.0 cycles/m)
-    plt.loglog(freqs, exact_cum, color='green', linestyle=':', linewidth=2, label='Exact Model (Truncated at 20.0 cycles/m)')
+    # Exact Cumulative Model (Truncated at 2000.0 cycles/m)
+    plt.loglog(freqs, exact_cum, color='green', linestyle=':', linewidth=2, label='Exact Model (Truncated at 2000.0 cycles/m)')
     
     # Plot limits and markers
     plt.axvline(0.002, color='orange', linestyle='--', alpha=0.7, label='Lower Cutoff (f_min = 0.002)')

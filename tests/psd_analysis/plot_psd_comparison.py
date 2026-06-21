@@ -37,7 +37,7 @@ def exact_isotropic_cum_model(f_array, C1, w):
     I_val = get_I(alpha)
     results = []
     for f_val in f_array:
-        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 20.0)
+        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 2000.0)
         results.append(C1 * (2.0 / I_val) * val)
     return np.array(results)
 
@@ -47,7 +47,7 @@ def main():
     
     # Initialize FMU query helper
     fmu_query = FMURoadQuery()
-    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=20.0, Nf=64, Ntheta=16)
+    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=64, Ntheta=16)
     
     slice_length = 1000.0
     dx = 0.025

@@ -56,9 +56,9 @@ The table below summarizes the exact FMI variables set on the FMU for each of th
 | **Parameter Fitting (Case 1)** | `200 + slice_idx` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **Parameter Fitting (Case 2)** | `201 + slice_idx` | `0` (Custom) | `256e-6` | `1.8` | `0.002` | `2000.0` | `512` | `32` |
 | **Parameter Fitting (Case 3)** | `202 + slice_idx` | `0` (Custom) | `1024e-6` | `2.2` | `0.002` | `2000.0` | `512` | `32` |
-| **Direct FFT Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
-| **Infinite Model Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
-| **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `20.0` | `64` | `16` |
+| **Direct FFT Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
+| **Infinite Model Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
+| **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
 | **Parameter Sweep Case 1** | `42` | `0` (Custom) | `4e-6` | `1.5` | `0.002` | `2000.0` | `64` | `16` |
 | **Parameter Sweep Case 2** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
 | **Parameter Sweep Case 3** | `42` | `0` (Custom) | `256e-6` | `3.0` | `0.002` | `2000.0` | `64` | `16` |
