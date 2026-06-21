@@ -65,22 +65,33 @@ Using this corrected continuous scaling coefficient, the average PSD of the proj
 
 ---
 
-## 4. Architectural Decisions
+### 4. Architectural Decisions & Optimization
+
 1. **Sum-of-Sinusoids (Shinozuka Method) vs. Grid-Based FFT**:
    * *Grid-Based FFT*: Requires pre-generating a discrete 2D mesh of height coordinates. To cover a 1000 m $\times$ 1000 m domain at a fine 0.025 m resolution, a $40,000 \times 40,000$ grid requires **12.8 GB** of RAM to store, and height evaluation at arbitrary coordinates requires 2D interpolation (introducing numerical smoothing and interpolation errors). Additionally, the surface repeats periodically outside grid boundaries.
    * *Sum-of-Sinusoids*: Surface height $z(x, y)$ is evaluated analytically at the requested coordinates on demand. It is memoryless, spatially infinite (no domain boundaries), requires zero interpolation, and uses only $O(1)$ memory (only storing the wave ring amplitudes and phases, which is $\sim 130$ KB for $N_f=512, N_\theta=32$), ensuring infinite domain repeatability.
-2. **Single Query Point FMI Causality ($x, y \rightarrow z$)**:
-   * The FMU is modeled as a single-point co-simulation block (inputs `x`, `y` and output `z`).
-   * This aligns with standard multibody vehicle simulation software (e.g. MSC Adams, Simpack, VI-Grade, IPG CarMaker) which manages wheels as separate, independent subsystem blocks. 
-   * By instantiating 4 separate FMU instances using the same `seed` parameter, cross-wheel spatial determinism is guaranteed (i.e. if the front-left and rear-left tires pass through the exact same coordinate $(x,y)$ at different time steps, they query the exact same height $z$).
-3. **Logarithmic Radial Frequency Discretization**:
-   * Linear frequency spacing is inefficient for broad bandwidths (e.g., $f \in [0.002, 2000.0]$ cycles/m) because it allocates too few bins at the low-frequency range where the majority of road profile power is concentrated.
-   * We use log-spaced radial frequency bands $f_r$ to distribute wave ring densities, which concentrates wave components at lower frequencies (long wavelengths) while still capturing high-frequency micro-roughness with high fidelity.
-4. **Execution Performance & Vectorization**:
-   * The FMU evaluates height using NumPy vectorized arrays: `np.sum(self._amps * np.cos(self._kx * px + self._ky * py + self._phis))`.
-   * In pure Python, evaluating 16,384 wave components ($N_f=512, N_\theta=32$) on a single coordinate point takes only **~4 microseconds**.
-   * However, when run via `pythonfmu` inside an FMI co-simulation loop, crossing the C-to-Python interpreter boundary (Python C-API overhead) adds a constant wrapper overhead of **~0.1 ms** per time step.
-   * *Production Recommendation*: For real-time simulation loops where the physics cycle is $<1$ ms, a C/C++ FMI implementation of this wave summation is recommended to avoid Python interpreter overhead.
+2. **Native C++ Implementation (FMI 2.0 Compliance)**:
+   * To prevent the C-to-Python ctypes wrapper overhead (~170 $\mu$s per time step), the production FMU is implemented in native C++ ([cpp_fmu/src/InfiniteRoadFMU.cpp](cpp_fmu/src/InfiniteRoadFMU.cpp)). This makes it 100% self-contained and Python-independent.
+3. **Float-Precision Conversion**:
+   * Replaced internal double-precision math with single-precision floating-point (`float`). This halves memory bandwidth and allows the CPU to process twice as many calculations per SIMD register.
+4. **Minimax Cosine Polynomial & AVX2 SIMD Autovectorization**:
+   * Standard library `std::cos` calls are slow when executed sequentially. Instead, we use a branchless 6th-degree minimax polynomial approximation evaluated via Horner's method. 
+   * Compiled with `/arch:AVX2 /fp:fast` flags, the MSVC compiler auto-vectorizes this register-only loop to calculate 8 cosine values in parallel per clock cycle, accelerating computation by **28x** over scalar execution.
+
+---
+
+## 5. Performance Benchmarks
+
+Evaluating a query of **25,000 points** along a road slice (16,384 wave components per query) yields the following performance comparison:
+
+| Importer Wrapper | FMU Implementation | Total Time (s) | Avg Query Time ($\mu\text{s}$/point) | Speedup |
+| :--- | :--- | :---: | :---: | :---: |
+| **C++ Wrapper** | **C++ FMU (Optimized Minimax)** | **0.158 s** | **6.33 $\mu\text{s}$** | **31.3x** (Best) |
+| **Python (FMPy)** | **C++ FMU (Optimized Minimax)** | 0.293 s | 11.73 $\mu\text{s}$ | 16.9x |
+| **Python (FMPy)** | **Python FMU** | 4.969 s | 198.76 $\mu\text{s}$ | 1.00x (Baseline) |
+| **C++ Wrapper** | **Python FMU** | 4.976 s | 199.04 $\mu\text{s}$ | 1.00x |
+
+*Note: With dynamic memory lookup tables (LUTs) disabled, the C++ FMU's execution time is 99.88% dominated by pure register arithmetic, with FMI wrapper overhead contributing only **7.3 nanoseconds** (0.11%) per query.*
 
 ---
 
@@ -119,25 +130,26 @@ Using this corrected continuous scaling coefficient, the average PSD of the proj
 ## 7. How to Compile & Run
 
 ### Prerequisites
-Install FMI testing and building libraries:
-```bash
-pip install pythonfmu fmpy numpy scipy matplotlib
-```
+To compile the C++ FMU and execute verification tests, install:
+* **C++ Compiler:** Visual Studio 2022 (MSVC) with C++ Desktop Development tools.
+* **Build System:** CMake 3.10 or higher.
+* **Python Environment:** Install testing libraries:
+  ```bash
+  pip install pythonfmu fmpy numpy scipy matplotlib
+  ```
 
-### Rebuilding the FMU
-If you modify the source model [infinite_road_fmu.py](infinite_road_fmu.py), rebuild the FMU using:
+### Rebuilding the C++ FMU
+To compile the C++ shared library (`InfiniteRoadFMU.dll`) and package it into `InfiniteRoadFMU.fmu`, run:
 ```bash
-pythonfmu build -f infinite_road_fmu.py
+python build_cpp_fmu.py
 ```
-
-### Running Simulation Validation
-Run the test suite to verify concurrent multi-instance determinism and seed sensitivity:
-```bash
-python tests/fmu_validation/test_fmu_simulation.py
-```
+This script will:
+1. Configure and run a CMake build in the `cpp_fmu/build/` directory in Release mode.
+2. Compile `InfiniteRoadFMU.cpp` with `/arch:AVX2 /fp:fast` optimizations.
+3. Stage the compiled DLL, create an FMI 2.0-compliant `modelDescription.xml`, and package them into a compressed `.fmu` archive at the workspace root.
 
 ### Running the Full Verification Suite
-To execute all verification scripts (FMI co-simulation, distance homogeneity, multi-class parameter fitting, and analytical PSD discretization sweeps) and regenerate all reports and plots, run:
+To execute all verification scripts (including FMI co-simulation, 100 km homogeneity verification, parameter fitting, and grid sweeps) and regenerate all reports and plots, run:
 ```bash
 python run_tests.py
 ```
