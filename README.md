@@ -67,9 +67,9 @@ Using this corrected continuous scaling coefficient, the average PSD of the proj
 
 ### 4. Architectural Decisions & Optimization
 
-1. **Sum-of-Sinusoids (Shinozuka Method) vs. Grid-Based FFT**:
-   * *Grid-Based FFT*: Requires pre-generating a discrete 2D mesh of height coordinates. To cover a 1000 m $\times$ 1000 m domain at a fine 0.025 m resolution, a $40,000 \times 40,000$ grid requires **12.8 GB** of RAM to store, and height evaluation at arbitrary coordinates requires 2D interpolation (introducing numerical smoothing and interpolation errors). Additionally, the surface repeats periodically outside grid boundaries.
-   * *Sum-of-Sinusoids*: Surface height $z(x, y)$ is evaluated analytically at the requested coordinates on demand. It is memoryless, spatially infinite (no domain boundaries), requires zero interpolation, and uses only $O(1)$ memory (only storing the wave ring amplitudes and phases, which is $\sim 130$ KB for $N_f=512, N_\theta=32$), ensuring infinite domain repeatability.
+1. **Sum-of-Sinusoids (Shinozuka Method) vs. Grid-Based FFT & Caching**:
+   * *Grid-Based FFT & Caching*: Pre-generating a discrete 2D mesh of height coordinates requires immense memory (e.g., 12.8 GB for a 1 km x 1 km grid at 0.025 m resolution). Alternatively, dynamically generating and caching 2D grid blocks on the fly to follow the vehicle introduces severe code complexity, boundary-transition interpolation logic, and execution latency spikes. Furthermore, if a vehicle spins, slides, or travels in arbitrary non-linear trajectories, tire contact patches sweep unpredictable paths across the 2D plane, rendering narrow path pre-calculation impossible.
+   * *Analytical Procedural Math*: Height $z(x, y)$ is evaluated analytically at the exact tire coordinates on demand. It is truly memoryless ($O(1)$ RAM footprint, storing only $\sim 130$ KB of wave parameter states), spatially infinite (no domain or boundary limits), and requires zero grid-paging or boundary checks. Even if the vehicle spins, drifts, or takes arbitrary 2D trajectories, the height is computed instantly in $\approx 6\ \mu\text{s}$ with zero boundary-crossing or caching overhead.
 2. **Native C++ Implementation (FMI 2.0 Compliance)**:
    * To prevent the C-to-Python ctypes wrapper overhead (~170 $\mu$s per time step), the production FMU is implemented in native C++ ([cpp_fmu/src/InfiniteRoadFMU.cpp](cpp_fmu/src/InfiniteRoadFMU.cpp)). This makes it 100% self-contained and Python-independent.
 3. **Float-Precision Conversion**:
