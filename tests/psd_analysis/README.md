@@ -19,8 +19,8 @@ Integrating the PSD from high to low frequencies yields the cumulative power cur
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
 - **`f_max`**: `2000.0` cycles/m
-- **`Nf`**: `64`
-- **`Ntheta`**: `16`
+- **`Nf`**: `512`
+- **`Ntheta`**: `32`
 
 ![Direct FFT PSD Comparison](psd_direct_fft_comparison.png)
 
@@ -38,8 +38,8 @@ Below $f_{\min} = 0.002$ cycles/m, no waves are generated, so the physical cumul
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
 - **`f_max`**: `2000.0` cycles/m
-- **`Nf`**: `64`
-- **`Ntheta`**: `16`
+- **`Nf`**: `512`
+- **`Ntheta`**: `32`
 
 ![Infinite PSD Comparison](psd_infinite_comparison.png)
 
@@ -55,8 +55,8 @@ This plot compares the continuous target ISO 8608 PSD against the Welch-estimate
 - **`w`**: `2.0`
 - **`f_min`**: `0.002` cycles/m
 - **`f_max`**: `2000.0` cycles/m
-- **`Nf`**: `64`
-- **`Ntheta`**: `16`
+- **`Nf`**: `512`
+- **`Ntheta`**: `32`
 
 ![PSD Comparison Curves](psd_comparison_curves.png)
 
