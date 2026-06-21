@@ -12,29 +12,24 @@ This report validates the deterministic 2D isotropic road profile generator defi
 2. **Cumulative PSD Fitting (Recommended)**:
    - By integrating the FFT PSD from high to low frequencies, we calculate the cumulative power $\Phi(f) = \sum_{f_k \ge f} \text{psd}(f_k) \cdot df$, which represents the residual height variance above frequency $f$.
    - The cumulative function $\Phi(f)$ is smooth, monotonic, and immune to empty-bin spikes.
-   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates once calibrated.
+   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates directly from raw slice data.
 
-## Summary Table (Calibrated Cumulative PSD Method)
+## Summary Table (Cumulative PSD Fitting)
 
 | Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\mu$m³) | Fitted Mean $G$ ($\mu$m³) | Exponent Error | Roughness Error |
 |---|---|---|---|---|---|---|
-| Case 1 | 2.00 | 2.0039 ± 0.0501 | 64.0 | 66.85 ± 15.37 | 0.19% | 4.45% |
-| Case 2 | 1.80 | 1.8009 ± 0.0470 | 256.0 | 258.76 ± 64.86 | 0.05% | 1.08% |
-| Case 3 | 2.20 | 2.1953 ± 0.0632 | 1024.0 | 1040.45 ± 276.80 | 0.21% | 1.61% |
+| Case 1 | 2.00 | 1.9984 ± 0.0508 | 64.0 | 65.35 ± 15.13 | 0.08% | 2.11% |
+| Case 2 | 1.80 | 1.7928 ± 0.0476 | 256.0 | 251.43 ± 63.39 | 0.40% | 1.79% |
+| Case 3 | 2.20 | 2.1923 ± 0.0640 | 1024.0 | 1023.10 ± 274.17 | 0.35% | 0.09% |
 
 
-## Mathematical Verification and Scaling Calibration
+## Mathematical Verification and Scaling
 > [!IMPORTANT]
 > The FMU scaling coefficient $C_2$ has been corrected by changing the denominator from $4.0$ to $2.0$:
 > $$C_2 = \frac{C_1}{2.0 \cdot I(\alpha)}$$
 > All other parameters match the updated benchmark model ($f_{\min} = 0.002, f_{\max} = 2000.0, Nf = 512, N\theta = 32, dx = 0.002$).
 
-### Calibration Parameters
-To eliminate discretization and windowing tail truncation bias, we use the following calibration linear mappings:
-- $w_{\text{calibrated}} = 0.987182 \cdot w_{\text{fit}} + 0.031089$
-- $G_{\text{calibrated}} = G_{\text{fit}} \cdot 10^{w_{\text{calibrated}} - w_{\text{fit}}} \cdot 1.010491$
-
-This calibration yields average errors $< 1.5\%$ across all three road classes.
+No empirical calibration or workaround multiplier is needed to achieve high accuracy ($< 2.5\%$ average parameter error).
 
 ## Parameter Fitting Visualizations
 

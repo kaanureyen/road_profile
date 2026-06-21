@@ -29,7 +29,7 @@ def exact_isotropic_cum_model(f_array, C1, w):
 # Worker function to process a single slice in parallel using the FMU
 def process_slice_worker(args):
     (dist, i, G_target, w_target, Nf, Ntheta, slice_length, dx, f_fit_min, f_fit_max, 
-     slope_w, intercept_w, G_calibration_mult, unzipdir, guid, model_identifier, var_refs) = args
+     unzipdir, guid, model_identifier, var_refs) = args
     
     # Fully randomized start position heading from origin, and randomized running heading.
     # Seed based on dist and slice index to make the randomized selection reproducible.
@@ -117,14 +117,10 @@ def process_slice_worker(args):
         popt, _ = curve_fit(exact_isotropic_cum_model, freqs_fit, cum_psd_fit, p0=[C1_guess, w_target])
         C1_fit, w_fit = popt
         G_fit = C1_fit / (0.1**w_fit)
-        
-        # Apply calibration equations
-        w_cal = slope_w * w_fit + intercept_w
-        G_cal = G_fit * (10.0**(w_cal - w_fit)) * G_calibration_mult
     except Exception as e:
-        w_cal, G_cal = np.nan, np.nan
+        w_fit, G_fit = np.nan, np.nan
         
-    return freqs, psd, cum_psd, w_cal, G_cal
+    return freqs, psd, cum_psd, w_fit, G_fit
 
 def main():
     G_target = 64e-6
@@ -146,10 +142,7 @@ def main():
     distances = [0.0, 1000.0, 10000.0, 100000.0] # 0m, 1km, 10km, 100km
     slices_per_dist = 10
     
-    # Calibration parameters solved for Nf=512, Ntheta=32 direct Hanning FFT
-    slope_w = 0.987182
-    intercept_w = 0.031089
-    G_calibration_mult = 1.010491
+
     
     # Extract FMU once in main process
     fmu_query = FMURoadQuery()
@@ -174,8 +167,7 @@ def main():
         for i in range(slices_per_dist):
             tasks.append((
                 dist, i, G_target, w_target, Nf, Ntheta, slice_length, dx,
-                f_fit_min, f_fit_max, slope_w, intercept_w, G_calibration_mult,
-                unzipdir, guid, model_identifier, var_refs
+                f_fit_min, f_fit_max, unzipdir, guid, model_identifier, var_refs
             ))
             
         w_fits = []
@@ -211,8 +203,8 @@ def main():
         in_std_G = "YES" if (np.abs(mean_G - G_target) <= std_G) else "NO"
         
         print(f"Distance {dist_km:.1f} km Results Summary:", flush=True)
-        print(f"  Calibrated w: {mean_w:.4f} +/- {std_w:.4f} (Error: {err_w:.3f}%) | Target in +/- 1std: {in_std_w}", flush=True)
-        print(f"  Calibrated G: {mean_G*1e6:.2f} +/- {std_G*1e6:.2f} um3 (Error: {err_G:.3f}%) | Target in +/- 1std: {in_std_G}", flush=True)
+        print(f"  Fitted w: {mean_w:.4f} +/- {std_w:.4f} (Error: {err_w:.3f}%) | Target in +/- 1std: {in_std_w}", flush=True)
+        print(f"  Fitted G: {mean_G*1e6:.2f} +/- {std_G*1e6:.2f} um3 (Error: {err_G:.3f}%) | Target in +/- 1std: {in_std_G}", flush=True)
         
         results_by_dist[dist] = {
             'w_fits': np.array(w_fits),
@@ -318,7 +310,7 @@ def main():
         f.write(f"- **Sampling Interval $dx$:** {dx} m\n\n")
         
         f.write("## Homogeneity Verification Results\n\n")
-        f.write("| Distance | Calibrated $w$ (Mean $\\pm$ Std) | Calibrated $G$ ($\\mu$m³) (Mean $\\pm$ Std) | Target $w$ in $\\pm 1$ std? | Target $G$ in $\\pm 1$ std? | $w$ Error | $G$ Error |\n")
+        f.write("| Distance | Fitted $w$ (Mean $\\pm$ Std) | Fitted $G$ ($\\mu$m³) (Mean $\\pm$ Std) | Target $w$ in $\\pm 1$ std? | Target $G$ in $\\pm 1$ std? | $w$ Error | $G$ Error |\n")
         f.write("|---|---|---|---|---|---|---|\n")
         for dist in distances:
             res = results_by_dist[dist]

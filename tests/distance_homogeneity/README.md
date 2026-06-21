@@ -12,12 +12,12 @@ This report validates the spatial homogeneity and isotropy of the 2D road profil
 
 ## Homogeneity Verification Results
 
-| Distance | Calibrated $w$ (Mean $\pm$ Std) | Calibrated $G$ ($\mu$m³) (Mean $\pm$ Std) | Target $w$ in $\pm 1$ std? | Target $G$ in $\pm 1$ std? | $w$ Error | $G$ Error |
+| Distance | Fitted $w$ (Mean $\pm$ Std) | Fitted $G$ ($\mu$m³) (Mean $\pm$ Std) | Target $w$ in $\pm 1$ std? | Target $G$ in $\pm 1$ std? | $w$ Error | $G$ Error |
 |---|---|---|---|---|---|---|
-| 0.0 km | 1.9893 $\pm$ 0.0451 | 61.71 $\pm$ 13.31 | YES | YES | 0.535% | 3.579% |
-| 1.0 km | 2.0254 $\pm$ 0.0330 | 70.88 $\pm$ 11.08 | YES | YES | 1.269% | 10.745% |
-| 10.0 km | 1.9173 $\pm$ 0.0443 | 65.61 $\pm$ 14.39 | NO | YES | 4.133% | 2.523% |
-| 100.0 km | 2.0055 $\pm$ 0.0000 | 65.49 $\pm$ 0.00 | NO | NO | 0.273% | 2.326% |
+| 0.0 km | 1.9836 $\pm$ 0.0457 | 60.30 $\pm$ 13.10 | YES | YES | 0.818% | 5.789% |
+| 1.0 km | 2.0202 $\pm$ 0.0335 | 69.32 $\pm$ 10.90 | YES | YES | 1.009% | 8.309% |
+| 10.0 km | 1.9107 $\pm$ 0.0448 | 63.97 $\pm$ 14.11 | NO | YES | 4.463% | 0.042% |
+| 100.0 km | 2.0000 $\pm$ 0.0000 | 64.00 $\pm$ 0.00 | YES | YES | 0.000% | 0.000% |
 
 
 ## Homogeneity Curves Plot
