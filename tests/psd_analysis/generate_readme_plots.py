@@ -108,8 +108,8 @@ def main():
     # 2. 2D Surface Map & Offset Slices Isotropy Verification
     # Grid: 500x500m with 2.0m spacing (251x251 points)
     print("Generating 2D Class C elevation map grid...", flush=True)
-    x_grid = np.linspace(0.0, 500.0, 251)
-    y_grid = np.linspace(0.0, 500.0, 251)
+    x_grid = np.linspace(0.0, 5000.0, 251)
+    y_grid = np.linspace(0.0, 5000.0, 251)
     X_grid, Y_grid = np.meshgrid(x_grid, y_grid)
     
     Z_grid = fmu_query.query_profile_parallel(
@@ -142,7 +142,7 @@ def main():
     ax_map = fig2.add_subplot(gs[:, 0])
     im = ax_map.imshow(
         Z_grid, 
-        extent=[0, 500.0, 0, 500.0], 
+        extent=[0, 5000.0, 0, 5000.0], 
         origin='lower',
         cmap='terrain', 
         aspect='equal'
@@ -175,8 +175,8 @@ def main():
         
     ax_map.legend(loc='upper right', fontsize=8.5)
     ax_map.grid(True, linestyle='--', alpha=0.4)
-    ax_map.set_xlim(0, 500.0)
-    ax_map.set_ylim(0, 500.0)
+    ax_map.set_xlim(0, 5000.0)
+    ax_map.set_ylim(0, 5000.0)
     
     # Right Panels: 4 separate PSD subplots
     ax_psd_list = [
