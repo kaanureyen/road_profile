@@ -29,8 +29,15 @@ def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
         if f_val >= f_max:
             results.append(0.0)
         else:
-            val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), max(f_val, f_min), f_max)
-            results.append(C1 * (2.0 / I_val) * val)
+            f_start = max(f_val, f_min)
+            u_start = np.arccos(np.clip(f_val / f_start, -1.0, 1.0))
+            u_end = np.arccos(np.clip(f_val / f_max, -1.0, 1.0))
+            val, _ = integrate.quad(
+                lambda u: u * np.sin(u) * (np.cos(u)**(w - 2.0)),
+                u_start,
+                u_end
+            )
+            results.append(C1 * (2.0 / I_val) * (f_val**(1.0 - w)) * val)
     return np.array(results)
 
 
@@ -351,10 +358,6 @@ def main():
         f_fit_min = res['f_fit_min']
         f_fit_max = res['f_fit_max']
         
-        # Plot individual PSDs
-        for i in range(min(5, len(all_psds))):
-            ax.loglog(freqs, all_psds[i], color='gray', alpha=0.2, linewidth=0.5)
-            
         # Plot average PSD
         ax.loglog(freqs, avg_psd, color='#1f77b4', linewidth=2, label='Estimated Slice PSD (Average)')
         
@@ -369,9 +372,6 @@ def main():
         C1_fitted = G_fitted * (0.1**w_fitted)
         fitted_psd = C1_fitted * (freqs**(-w_fitted))
         ax.loglog(freqs, fitted_psd, color='#2ca02c', linestyle=':', linewidth=2, label='Fitted PSD')
-        
-        ax.axvline(f_fit_min, color='orange', linestyle=':', label='Fit window limits')
-        ax.axvline(f_fit_max, color='orange', linestyle=':')
         
         ax.set_title(f"Case {idx+1}: Target G={G_target*1e6:.1f} um3, w={w_target:.1f}\nFitted Avg: G={G_fitted*1e6:.1f} um3, w={w_fitted:.2f}")
         ax.set_xlabel("Spatial Frequency (cycles/m)")

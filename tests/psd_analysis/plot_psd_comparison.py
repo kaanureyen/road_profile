@@ -44,8 +44,15 @@ def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
         if f_val >= f_max:
             results.append(0.0)
         else:
-            val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), max(f_val, f_min), f_max)
-            results.append(C1 * (2.0 / I_val) * val)
+            f_start = max(f_val, f_min)
+            u_start = np.arccos(np.clip(f_val / f_start, -1.0, 1.0))
+            u_end = np.arccos(np.clip(f_val / f_max, -1.0, 1.0))
+            val, _ = integrate.quad(
+                lambda u: u * np.sin(u) * (np.cos(u)**(w - 2.0)),
+                u_start,
+                u_end
+            )
+            results.append(C1 * (2.0 / I_val) * (f_val**(1.0 - w)) * val)
     return np.array(results)
 
 def main():

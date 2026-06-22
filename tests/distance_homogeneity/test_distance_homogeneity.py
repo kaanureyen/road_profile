@@ -29,8 +29,15 @@ def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
         if f_val >= f_max:
             results.append(0.0)
         else:
-            val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), max(f_val, f_min), f_max)
-            results.append(C1 * (2.0 / I_val) * val)
+            f_start = max(f_val, f_min)
+            u_start = np.arccos(np.clip(f_val / f_start, -1.0, 1.0))
+            u_end = np.arccos(np.clip(f_val / f_max, -1.0, 1.0))
+            val, _ = integrate.quad(
+                lambda u: u * np.sin(u) * (np.cos(u)**(w - 2.0)),
+                u_start,
+                u_end
+            )
+            results.append(C1 * (2.0 / I_val) * (f_val**(1.0 - w)) * val)
     return np.array(results)
 
 def custom_welch(y, fs, nperseg):
@@ -271,11 +278,6 @@ def main():
         avg_psd = np.mean(res['psds_welch'], axis=0)
         avg_cum_psd = np.mean(res['cum_psds_fft'], axis=0)
         
-        # Faint lines for individual slices
-        for i in range(min(3, len(res['psds_welch']))):
-            ax_psd.loglog(freqs_welch, res['psds_welch'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
-            ax_cum.loglog(freqs_fft, res['cum_psds_fft'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
-            
         # Bold average lines
         ax_psd.loglog(freqs_welch, avg_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
         ax_cum.loglog(freqs_fft, avg_cum_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
