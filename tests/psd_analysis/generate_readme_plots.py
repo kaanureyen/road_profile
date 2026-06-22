@@ -37,10 +37,10 @@ def main():
     f_min = 0.002
     f_max = 2000.0
     
-    # 1. 1D C-Type Profile Plot (500m length, dx=0.025m, generated via IFFT with random phases)
+    # 1. 1D C-Type Profile Plot (500m length, dx=0.002m, generated via IFFT with random phases)
     print("Generating 1D Class C profile data via IFFT...", flush=True)
     slice_length = 500.0
-    dx = 0.025
+    dx = 0.002
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
     nperseg = 4096
