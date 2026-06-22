@@ -172,7 +172,7 @@ def main():
         # Copy to artifact folder if available
         artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
         if not artifact_dir:
-            artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+            artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
         try:
             os.makedirs(artifact_dir, exist_ok=True)
             plt.savefig(os.path.join(artifact_dir, "fmu_simulation_results.png"), dpi=150)

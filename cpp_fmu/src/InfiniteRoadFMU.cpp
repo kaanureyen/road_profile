@@ -84,8 +84,8 @@ struct ModelInstance {
     int road_class = 3; // 1=A, 2=B, 3=C, 4=D, 5=E, 0=Custom Gd_n0
     double Gd_n0 = 256e-6;
     double w = 2.0;
-    double f_min = 0.002;
-    double f_max = 2000.0;
+    double f_min = 0.005;
+    double f_max = 100.0;
     int Nf = 512;
     int Ntheta = 32;
     int disable_math = 0;

@@ -21,7 +21,7 @@ def get_I(alpha):
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
 # Exact cumulative PSD model used for curve fitting
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -92,8 +92,8 @@ def process_slice_worker(args):
     slave.setInteger([var_refs['road_class']], [0])  # Custom Gd_n0
     slave.setReal([var_refs['Gd_n0']], [float(G_target)])
     slave.setReal([var_refs['w']], [float(w_target)])
-    slave.setReal([var_refs['f_min']], [0.002])
-    slave.setReal([var_refs['f_max']], [2000.0])
+    slave.setReal([var_refs['f_min']], [0.005])
+    slave.setReal([var_refs['f_max']], [100.0])
     
     if 'Nf' in var_refs:
         slave.setInteger([var_refs['Nf']], [int(Nf)])
@@ -164,8 +164,8 @@ def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_r
     
     Nf = 512
     Ntheta = 32
-    f_fit_min = 0.02
-    f_fit_max = 200.0
+    f_fit_min = 0.01
+    f_fit_max = 90.0
     
     tasks = []
     for i in range(num_slices):
@@ -308,7 +308,7 @@ def main():
     
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
     except Exception:
@@ -419,7 +419,7 @@ def main():
                 f.write("2. **Cumulative PSD Fitting (Recommended)**:\n")
                 f.write("   - By integrating the FFT PSD from high to low frequencies, we calculate the cumulative power $\\Phi(f) = \\sum_{f_k \\ge f} \\text{psd}(f_k) \\cdot df$, which represents the residual height variance above frequency $f$.\n")
                 f.write("   - The cumulative function $\\Phi(f)$ is smooth, monotonic, and immune to empty-bin spikes.\n")
-                f.write("   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.02, 200.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates directly from raw slice data.\n\n")
+                f.write("   - Fitting the cumulative PSD curve to the exact isotropic cumulative projection model using 100 decimated points in $[0.01, 90.0]$ cycles/m yields extremely accurate exponent ($w$) and roughness ($G$) estimates directly from raw slice data.\n\n")
                 
                 f.write("## Summary Table (Cumulative PSD Fitting)\n\n")
                 f.write("| Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\\mu$m³) | Fitted Mean $G$ ($\\mu$m³) | Exponent Error | Roughness Error |\n")
@@ -434,9 +434,9 @@ def main():
                     
                 f.write("\n\n## Mathematical Verification and Scaling\n")
                 f.write("> [!IMPORTANT]\n")
-                f.write("> The FMU scaling coefficient $C_2$ has been corrected by changing the denominator from $4.0$ to $2.0$:\n")
-                f.write("> $$C_2 = \\frac{C_1}{2.0 \\cdot I(\\alpha)}$$\n")
-                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.002, f_{\\max} = 2000.0, Nf = 512, N\\theta = 32, dx = 0.002$).\n\n")
+                f.write("> The FMU scaling coefficient $C_2'$ has been corrected to preserve total variance over the half-circle angular discretization:\n")
+                f.write("> $$C_2' = \\frac{C_1}{I(\\alpha)}$$\n")
+                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.005, f_{\\max} = 100.0, Nf = 512, N\\theta = 32, dx = 0.002$).\n\n")
                 f.write("No empirical calibration or workaround multiplier is needed to achieve high accuracy ($< 2.5\\%$ average parameter error).\n\n")
                 
                 f.write("## Parameter Fitting Visualizations\n\n")

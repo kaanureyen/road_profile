@@ -36,7 +36,7 @@ def custom_welch(y, fs, nperseg):
     return freqs, psd
 
 # Exact isotropic cumulative projection model
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -61,7 +61,7 @@ def main():
     
     # Initialize FMU query helper
     fmu_query = FMURoadQuery()
-    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.002, f_max=2000.0, Nf=512, Ntheta=32)
+    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.005, f_max=100.0, Nf=512, Ntheta=32)
     
     slice_length = 1000.0
     dx = 0.025
@@ -146,7 +146,7 @@ def main():
     
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
         plt.savefig(os.path.join(artifact_dir, "psd_comparison_curves.png"), dpi=150)

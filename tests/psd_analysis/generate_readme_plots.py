@@ -34,8 +34,8 @@ def main():
     road_class = 3  # Class C
     Nf = 512
     Ntheta = 32
-    f_min = 0.002
-    f_max = 2000.0
+    f_min = 0.005
+    f_max = 100.0
     
     # 1. 1D C-Type Profile Plot (500m length, dx=0.002m, generated via IFFT with random phases)
     print("Generating 1D Class C profile data via IFFT...", flush=True)
@@ -198,7 +198,7 @@ def main():
     # Copy both plots to artifact folder for user display
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\4af6970b-d519-4bdc-bab4-d44fbaacc303"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
         shutil.copy(output_1d, os.path.join(artifact_dir, "readme_1d_road.png"))

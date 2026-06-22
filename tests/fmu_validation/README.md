@@ -13,8 +13,8 @@ This report presents the FMI co-simulation compliance, multi-wheel query safety,
 - **`road_class`**: `2` (mapped to Class B target $G_d(n_0) = 64\times 10^{-6}\text{ m}^3$)
 - **`Gd_n0`**: `64e-6` (inactive because `road_class` is non-zero)
 - **`w`**: `2.0` (standard ISO exponent)
-- **`f_min`**: `0.002` (lower cutoff frequency)
-- **`f_max`**: `2000.0` (upper cutoff frequency)
+- **`f_min`**: `0.005` (lower cutoff frequency)
+- **`f_max`**: `100.0` (upper cutoff frequency)
 - **`Nf`**: `512` (radial frequency rings)
 - **`Ntheta`**: `32` (angular divisions)
 

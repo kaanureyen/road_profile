@@ -21,7 +21,7 @@ def get_I(alpha):
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
 # Exact cumulative PSD model used for curve fitting
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -93,8 +93,8 @@ def process_slice_worker(args):
     slave.setInteger([var_refs['road_class']], [0])  # Custom Gd_n0
     slave.setReal([var_refs['Gd_n0']], [float(G_target)])
     slave.setReal([var_refs['w']], [float(w_target)])
-    slave.setReal([var_refs['f_min']], [0.002])
-    slave.setReal([var_refs['f_max']], [2000.0])
+    slave.setReal([var_refs['f_min']], [0.005])
+    slave.setReal([var_refs['f_max']], [100.0])
     
     if 'Nf' in var_refs:
         slave.setInteger([var_refs['Nf']], [int(Nf)])
@@ -171,9 +171,9 @@ def main():
     slice_length = 500.0
     dx = 0.002
     
-    # Fit window [0.02, 200.0] cycles/m (wavelengths 50m to 0.005m)
-    f_fit_min = 0.02
-    f_fit_max = 200.0
+    # Fit window [0.01, 90.0] cycles/m (wavelengths 100m to 0.011m)
+    f_fit_min = 0.01
+    f_fit_max = 90.0
     
     distances = [0.0, 1000.0, 10000.0, 100000.0] # 0m, 1km, 10km, 100km
     slices_per_dist = 10
@@ -315,7 +315,7 @@ def main():
     # Also save to current conversation artifacts
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
         plt.savefig(os.path.join(artifact_dir, plot_name), dpi=150)

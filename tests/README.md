@@ -49,14 +49,14 @@ The table below summarizes the exact FMI variables set on the FMU for each of th
 
 | Test Suite / Scenario | `seed` | `road_class` | `Gd_n0` ($m^3$) | `w` | `f_min` (c/m) | `f_max` (c/m) | `Nf` | `Ntheta` |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **FMI Simulation (Wheel 1-4)** | `42` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **FMI Simulation (Sensitivity)** | `99` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Distance Homogeneity** | `dist + slice_idx + 2026` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Parameter Fitting (Case 1)** | `200 + slice_idx` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Parameter Fitting (Case 2)** | `201 + slice_idx` | `0` (Custom) | `256e-6` | `1.8` | `0.002` | `2000.0` | `512` | `32` |
-| **Parameter Fitting (Case 3)** | `202 + slice_idx` | `0` (Custom) | `1024e-6` | `2.2` | `0.002` | `2000.0` | `512` | `32` |
-| **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Terrain Elevation Plot** | `42` | `3` (Class C) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
+| **FMI Simulation (Wheel 1-4)** | `42` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.005` | `100.0` | `512` | `32` |
+| **FMI Simulation (Sensitivity)** | `99` | `2` (Class B) | *Default (Inactive)* | `2.0` | `0.005` | `100.0` | `512` | `32` |
+| **Distance Homogeneity** | `dist + slice_idx + 2026` | `0` (Custom) | `64e-6` | `2.0` | `0.005` | `100.0` | `512` | `32` |
+| **Parameter Fitting (Case 1)** | `200 + slice_idx` | `0` (Custom) | `64e-6` | `2.0` | `0.005` | `100.0` | `512` | `32` |
+| **Parameter Fitting (Case 2)** | `201 + slice_idx` | `0` (Custom) | `256e-6` | `1.8` | `0.005` | `100.0` | `512` | `32` |
+| **Parameter Fitting (Case 3)** | `202 + slice_idx` | `0` (Custom) | `1024e-6` | `2.2` | `0.005` | `100.0` | `512` | `32` |
+| **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.005` | `100.0` | `512` | `32` |
+| **Terrain Elevation Plot** | `42` | `3` (Class C) | *Default (Inactive)* | `2.0` | `0.005` | `100.0` | `512` | `32` |
 
 ---
 

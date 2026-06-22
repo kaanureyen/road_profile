@@ -61,8 +61,8 @@ def main():
     road_class = 3  # Class C
     Nf = 512
     Ntheta = 32
-    f_min = 0.002
-    f_max = 2000.0
+    f_min = 0.005
+    f_max = 100.0
     
     t0 = time.time()
     
@@ -104,7 +104,7 @@ def main():
     # Copy to artifact directory
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
-        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\eb2516c5-ab48-42c6-b6d8-0b90cc4ca6ca"
+        artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
     try:
         os.makedirs(artifact_dir, exist_ok=True)
         fig_art = build_plots(X_macro, Y_macro, Z_macro, X_sub, Y_sub, Z_sub, seed, Nf, Ntheta, f_min, f_max)

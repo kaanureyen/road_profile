@@ -110,8 +110,14 @@ Evaluating a query of **25,000 points** along a road slice (16,384 wave componen
 * `road_class` (Integer, default = 3): ISO 8608 Class (1=A, 2=B, 3=C, 4=D, 5=E, 0=Custom Gd_n0).
 * `Gd_n0` (Real, default = 256e-6 $\text{m}^3$): Reference displacement PSD at $n_0=0.1$ cycles/m (active when `road_class=0`).
 * `w` (Real, default = 2.0): Spectral exponent.
-* `f_min` (Real, default = 0.002 cycles/m): Lower frequency cutoff.
-* `f_max` (Real, default = 2000.0 cycles/m): Upper frequency cutoff.
+* `f_min` (Real, default = 0.005 cycles/m): Lower frequency cutoff.
+* `f_max` (Real, default = 100.0 cycles/m): Upper frequency cutoff.
+
+> [!NOTE]
+> **Frequency Cutoff Selection Reasoning**
+> The defaults `f_min = 0.005` cycles/m (200m wavelength) and `f_max = 100.0` cycles/m (1cm wavelength) are chosen to cover a vehicle speed range of **5 to 300 km/h** and a temporal frequency range of **0.5 to 100 Hz**:
+> * **Upper limit (`f_max = 100.0` cycles/m / 1 cm):** At a minimum speed of $5\text{ km/h} \approx 1.39\text{ m/s}$, resolving a temporal frequency of $100\text{ Hz}$ requires a spatial frequency of $f = \frac{100\text{ Hz}}{1.39\text{ m/s}} = 72\text{ cycles/m}$. Setting `f_max = 100.0` cycles/m (wavelength 10 mm) safely covers this.
+> * **Lower limit (`f_min = 0.005` cycles/m / 200 m):** At a maximum speed of $300\text{ km/h} \approx 83.33\text{ m/s}$, resolving a temporal frequency of $0.5\text{ Hz}$ requires a spatial frequency of $f = \frac{0.5\text{ Hz}}{83.33\text{ m/s}} = 0.006\text{ cycles/m}$. Setting `f_min = 0.005` cycles/m (wavelength 200 m) safely covers this.
 
 ---
 

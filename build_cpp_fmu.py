@@ -86,10 +86,10 @@ def build_fmu():
 			<Real start="2"/>
 		</ScalarVariable>
 		<ScalarVariable name="f_min" valueReference="7" causality="parameter" variability="fixed">
-			<Real start="0.002"/>
+			<Real start="0.005"/>
 		</ScalarVariable>
 		<ScalarVariable name="f_max" valueReference="8" causality="parameter" variability="fixed">
-			<Real start="2000"/>
+			<Real start="100"/>
 		</ScalarVariable>
 		<ScalarVariable name="Nf" valueReference="9" causality="parameter" variability="fixed">
 			<Integer start="512"/>
