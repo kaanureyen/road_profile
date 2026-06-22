@@ -2,7 +2,7 @@
 
 This directory contains verification tests, diagnostic reports, and plots validating the 2D isotropic road profile generator using the compiled FMI Co-Simulation binary `InfiniteRoadFMU.fmu`.
 
-Every test suite is organized into its own subdirectory containing a `README.md` report that explains the test, presents the results, and displays the corresponding validation plots. This allows you to inspect all tests directly on GitHub.
+Every test suite is organized into its own subdirectory containing a `README.md` report that explains the test, presents the results, and displays the corresponding validation plots.
 
 ---
 
@@ -26,23 +26,20 @@ Every test suite is organized into its own subdirectory containing a `README.md`
 - **Test:** [`test_parameter_fitting.py`](parameter_fitting/test_parameter_fitting.py)
 - **FMU Used:** **Yes** (queries the `InfiniteRoadFMU.fmu` in parallel via `fmu_helper.py`)
 - **Report:** [Parameter Fitting Report](parameter_fitting/README.md)
-- **Validates:** Exponent $w$ and roughness $G$ estimation accuracy across Class B, Class C, and Class D road types. Evaluates isotropy and homogeneity using log-log cumulative PSD projection curve-fitting.
+- **Validates:** Exponent $w$ and roughness $G$ estimation accuracy across Class B, Class C, and Class D road types. Evaluates isotropy and homogeneity using log-log cumulative PSD projection curve-fitting on Welch-averaged PSDs.
 - **Result Plots:** 
   - `tests/parameter_fitting/parameter_fitting_case_*.png` (Individual cases)
   - `tests/parameter_fitting/parameter_fitting_summary.png` (Summary curve match)
 
-### 4. [Power Spectral Density & Sensitivity sweeps](psd_analysis/)
+### 4. [Power Spectral Density & Terrain Verification](psd_analysis/)
 - **Tests:**
-  - [`plot_direct_fft.py`](psd_analysis/plot_direct_fft.py) (**FMU Used: Yes**, via `fmu_helper.py`)
-  - [`plot_infinite_comparison.py`](psd_analysis/plot_infinite_comparison.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`plot_psd_comparison.py`](psd_analysis/plot_psd_comparison.py) (**FMU Used: Yes**, via `fmu_helper.py`)
-  - [`plot_amplitude_frequency.py`](psd_analysis/plot_amplitude_frequency.py) (**FMU Used: Yes**, via `fmu_helper.py`)
   - [`plot_terrain_surface.py`](psd_analysis/plot_terrain_surface.py) (**FMU Used: Yes**, via `fmu_helper.py`)
-  - [`run_advanced_analysis.py`](psd_analysis/run_advanced_analysis.py) (**FMU Used: Yes**, via `fmu_helper.py`)
-  - [`run_advanced_sensitivity.py`](psd_analysis/run_advanced_sensitivity.py) (**FMU Used: Yes**, via `fmu_helper.py`)
-- **Report:** [PSD Analysis Master Report](psd_analysis/README.md)
-- **Validates:** Frequency grid rings ($N_f$) and angular division ($N_\theta$) discretization sensitivities on the actual FMU, periodogram discretization valleys, and infinite vs. band-limited model truncation.
-- **Result Plots:** Multiple sensitivity curves and visualization profiles saved in `tests/psd_analysis/`.
+- **Report:** [PSD Analysis Report](psd_analysis/README.md)
+- **Validates:** Welch-averaged PSD representation (50% overlap), comparison of cumulative PSD to the exact isotropic cumulative model, and isotropic 2D elevation grid surface characteristics.
+- **Result Plots:** 
+  - `tests/psd_analysis/psd_comparison_curves.png`
+  - `tests/psd_analysis/road_terrain_500x500.png`
 
 ---
 
@@ -58,17 +55,8 @@ The table below summarizes the exact FMI variables set on the FMU for each of th
 | **Parameter Fitting (Case 1)** | `200 + slice_idx` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **Parameter Fitting (Case 2)** | `201 + slice_idx` | `0` (Custom) | `256e-6` | `1.8` | `0.002` | `2000.0` | `512` | `32` |
 | **Parameter Fitting (Case 3)** | `202 + slice_idx` | `0` (Custom) | `1024e-6` | `2.2` | `0.002` | `2000.0` | `512` | `32` |
-| **Direct FFT Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Infinite Model Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **PSD Comparison** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **FFT Amplitude/Frequency** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `512` | `32` |
 | **Terrain Elevation Plot** | `42` | `3` (Class C) | *Default (Inactive)* | `2.0` | `0.002` | `2000.0` | `512` | `32` |
-| **Parameter Sweep Case 1** | `42` | `0` (Custom) | `4e-6` | `1.5` | `0.002` | `2000.0` | `64` | `16` |
-| **Parameter Sweep Case 2** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `16` |
-| **Parameter Sweep Case 3** | `42` | `0` (Custom) | `256e-6` | `3.0` | `0.002` | `2000.0` | `64` | `16` |
-| **Parameter Sweep Case 4** | `42` | `0` (Custom) | `16384e-6` | `4.5` | `0.002` | `2000.0` | `64` | `16` |
-| **Grid Sensitivity ($N_f$ Sweep)** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `16` to `1024` | `16` |
-| **Grid Sensitivity ($N_\theta$ Sweep)** | `42` | `0` (Custom) | `64e-6` | `2.0` | `0.002` | `2000.0` | `64` | `4` to `64` |
 
 ---
 

@@ -1,8 +1,12 @@
 import os
 import sys
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
+from scipy.integrate import IntegrationWarning
+
+warnings.filterwarnings("ignore", category=IntegrationWarning)
 
 # Add tests/ to path to import fmu_helper
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -32,13 +36,16 @@ def custom_welch(y, fs, nperseg):
     return freqs, psd
 
 # Exact isotropic cumulative projection model
-def exact_isotropic_cum_model(f_array, C1, w):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
     for f_val in f_array:
-        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 2000.0)
-        results.append(C1 * (2.0 / I_val) * val)
+        if f_val >= f_max:
+            results.append(0.0)
+        else:
+            val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), max(f_val, f_min), f_max)
+            results.append(C1 * (2.0 / I_val) * val)
     return np.array(results)
 
 def main():
@@ -102,8 +109,6 @@ def main():
     ax2 = axes[1]
     ax2.loglog(freqs, cum_psd, color='blue', linewidth=2, label='Cumulative Welch PSD')
     ax2.loglog(freqs, exact_cum, color='red', linestyle='--', linewidth=2, label='Exact Isotropic Cumulative Model')
-    # Show fit range
-    ax2.axvspan(0.1, 3.0, color='orange', alpha=0.15, label='Fit Window [0.1, 3.0] cycles/m')
     ax2.set_title("Cumulative PSD (Residual Height Variance)")
     ax2.set_xlabel("Spatial Frequency (cycles/m)")
     ax2.set_ylabel("Cumulative Power (m²)")

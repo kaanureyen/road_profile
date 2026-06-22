@@ -123,7 +123,7 @@ Evaluating a query of **25,000 points** along a road slice (16,384 wave componen
   * [`fmu_validation/`](tests/fmu_validation/): FMI co-simulation compliance, concurrent multi-wheel query safety, and phase seed repeatability.
   * [`distance_homogeneity/`](tests/distance_homogeneity/): Spatial homogeneity validation at distances up to 100 km.
   * [`parameter_fitting/`](tests/parameter_fitting/): Log-log cumulative PSD parameter estimation and calibration mapping across road classes.
-  * [`psd_analysis/`](tests/psd_analysis/): Analytical grid density ($N_f$ and $N_\theta$), FFT periodicity, and model truncation studies.
+  * [`psd_analysis/`](tests/psd_analysis/): Welch-averaged PSD representation and exact isotropic cumulative model validation.
 * [.gitignore](.gitignore): Excludes python caches and build/extraction directories.
 
 ---
@@ -150,7 +150,7 @@ This script will:
 3. Stage the compiled DLL, create an FMI 2.0-compliant `modelDescription.xml`, and package them into a compressed `.fmu` archive at the workspace root.
 
 ### Running the Full Verification Suite
-To execute all verification scripts (including FMI co-simulation, 100 km homogeneity verification, parameter fitting, and grid sweeps) and regenerate all reports and plots, run:
+To execute all verification scripts (including FMI co-simulation, 100 km homogeneity verification, parameter fitting, and PSD/terrain analysis) and regenerate all plots, run:
 ```bash
 python run_tests.py
 ```

@@ -18,9 +18,9 @@ This report validates the deterministic 2D isotropic road profile generator defi
 
 | Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\mu$m³) | Fitted Mean $G$ ($\mu$m³) | Exponent Error | Roughness Error |
 |---|---|---|---|---|---|---|
-| Case 1 | 2.00 | 1.9919 ± 0.0410 | 64.0 | 62.37 ± 11.72 | 0.41% | 2.55% |
-| Case 2 | 1.80 | 1.7913 ± 0.0343 | 256.0 | 244.51 ± 44.39 | 0.48% | 4.49% |
-| Case 3 | 2.20 | 2.1890 ± 0.0519 | 1024.0 | 993.63 ± 215.55 | 0.50% | 2.97% |
+| Case 1 | 2.00 | 2.1130 ± 0.0324 | 64.0 | 107.16 ± 15.01 | 5.65% | 67.44% |
+| Case 2 | 1.80 | 1.8841 ± 0.0269 | 256.0 | 391.64 ± 51.88 | 4.67% | 52.98% |
+| Case 3 | 2.20 | 2.3617 ± 0.0365 | 1024.0 | 2010.41 ± 282.92 | 7.35% | 96.33% |
 
 
 ## Mathematical Verification and Scaling
