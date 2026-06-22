@@ -120,13 +120,18 @@ def main():
     # Define 4 offset slices (not passing through origin)
     # Format: (label, start_x, start_y, angle_deg, color)
     slices_def = [
-        ("Slice A (0° at Y=100m)", 50.0, 100.0, 0.0, '#2ca02c'),
+        ("Slice A (0° at Y=100m)", 0.0, 100.0, 0.0, '#2ca02c'),
         ("Slice B (45° from (50,50)m)", 50.0, 50.0, 45.0, '#ff7f0e'),
-        ("Slice C (90° at X=350m)", 350.0, 50.0, 90.0, '#9467bd'),
-        ("Slice D (135° from (350,100)m)", 350.0, 100.0, 135.0, '#e377c2')
+        ("Slice C (90° at X=350m)", 350.0, 0.0, 90.0, '#9467bd'),
+        ("Slice D (135° from (450,50)m)", 450.0, 50.0, 135.0, '#e377c2')
     ]
     
-    s_slice = np.linspace(0.0, 300.0, int(300.0 / dx), endpoint=False) # 300m long slices
+    slice_len_2d = 500.0
+    dx_2d = 0.002
+    N_slice_2d = int(slice_len_2d / dx_2d)
+    fs_2d = 1.0 / dx_2d
+    
+    s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False) # 500m long slices
     slice_psds = []
     
     fig2, axes2 = plt.subplots(1, 2, figsize=(15, 6.5))
@@ -151,8 +156,8 @@ def main():
         px = sx + s_slice * np.cos(rad)
         py = sy + s_slice * np.sin(rad)
         
-        # Draw on map
-        axes2[0].plot(px, py, color=color, linewidth=2.5, label=label)
+        # Draw on map (decimated for visual clarity and performance)
+        axes2[0].plot(px[::100], py[::100], color=color, linewidth=2.5, label=label)
         
         # Query slice profile using FMU
         print(f"Querying {label}...", flush=True)
@@ -162,7 +167,7 @@ def main():
         )
         
         # Compute PSD
-        freqs_s, psd_s = custom_welch(z_slice, fs=fs, nperseg=nperseg)
+        freqs_s, psd_s = custom_welch(z_slice, fs=fs_2d, nperseg=nperseg)
         slice_psds.append((label, freqs_s[1:], psd_s[1:], color))
         
     axes2[0].legend(loc='upper right', fontsize=8.5)
