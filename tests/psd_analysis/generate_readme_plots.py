@@ -135,20 +135,22 @@ def main():
     s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False) # 500m long slices
     slice_psds = []
     
-    fig2, axes2 = plt.subplots(1, 2, figsize=(15, 6.5))
+    fig2 = plt.figure(figsize=(18, 9.5))
+    gs = fig2.add_gridspec(2, 3, width_ratios=[1.3, 1.0, 1.0])
     
     # Left Panel: 2D Elevation contour map
-    im = axes2[0].imshow(
+    ax_map = fig2.add_subplot(gs[:, 0])
+    im = ax_map.imshow(
         Z_grid, 
         extent=[0, 500.0, 0, 500.0], 
         origin='lower',
         cmap='terrain', 
         aspect='equal'
     )
-    axes2[0].set_title("2D Elevation Map with Slice Trajectories", fontsize=13, fontweight='bold')
-    axes2[0].set_xlabel("Longitudinal Position X (m)")
-    axes2[0].set_ylabel("Lateral Position Y (m)")
-    cbar = fig2.colorbar(im, ax=axes2[0], fraction=0.046, pad=0.04)
+    ax_map.set_title("2D Elevation Map with Slice Trajectories", fontsize=13, fontweight='bold')
+    ax_map.set_xlabel("Longitudinal Position X (m)")
+    ax_map.set_ylabel("Lateral Position Y (m)")
+    cbar = fig2.colorbar(im, ax=ax_map, fraction=0.046, pad=0.04)
     cbar.set_label("Elevation Z (m)")
     
     for label, sx, sy, deg, color in slices_def:
@@ -158,7 +160,7 @@ def main():
         py = sy + s_slice * np.sin(rad)
         
         # Draw on map (decimated for visual clarity and performance)
-        axes2[0].plot(px[::100], py[::100], color=color, linewidth=2.5, label=label)
+        ax_map.plot(px[::100], py[::100], color=color, linewidth=2.5, label=label)
         
         # Query slice profile using FMU
         print(f"Querying {label}...", flush=True)
@@ -171,22 +173,30 @@ def main():
         freqs_s, psd_s = custom_welch(z_slice, fs=fs_2d, nperseg=nperseg_2d)
         slice_psds.append((label, freqs_s[1:], psd_s[1:], color))
         
-    axes2[0].legend(loc='upper right', fontsize=8.5)
-    axes2[0].grid(True, linestyle='--', alpha=0.4)
+    ax_map.legend(loc='upper right', fontsize=8.5)
+    ax_map.grid(True, linestyle='--', alpha=0.4)
     
-    # Right Panel: PSDs overlay
-    for label, fs_s, ps_s, color in slice_psds:
-        axes2[1].loglog(fs_s, ps_s, color=color, alpha=0.7, linewidth=1.5, label=f"Welch PSD ({label.split(' (')[0]})")
+    # Right Panels: 4 separate PSD subplots
+    ax_psd_list = [
+        fig2.add_subplot(gs[0, 1]), # top left of grid
+        fig2.add_subplot(gs[0, 2]), # top right of grid
+        fig2.add_subplot(gs[1, 1]), # bottom left of grid
+        fig2.add_subplot(gs[1, 2])  # bottom right of grid
+    ]
+    
+    for idx, (label, fs_s, ps_s, color) in enumerate(slice_psds):
+        ax_psd = ax_psd_list[idx]
+        ax_psd.loglog(fs_s, ps_s, color=color, alpha=0.8, linewidth=1.5, label='Welch PSD')
         
-    # Theoretical target
-    target_psd_slice = C1 * (slice_psds[0][1]**(-w))
-    axes2[1].loglog(slice_psds[0][1], target_psd_slice, color='black', linestyle='--', linewidth=2.0, label='ISO 8608 Class C Target')
-    
-    axes2[1].set_title("Isotropy & Homogeneity Verification", fontsize=13, fontweight='bold')
-    axes2[1].set_xlabel("Spatial Frequency (cycles/m)")
-    axes2[1].set_ylabel("PSD (m³)")
-    axes2[1].grid(True, which="both", linestyle='--', alpha=0.5)
-    axes2[1].legend(loc='lower left', fontsize=8.5)
+        # Theoretical target line
+        target_psd_slice = C1 * (fs_s**(-w))
+        ax_psd.loglog(fs_s, target_psd_slice, color='black', linestyle='--', linewidth=2.0, label='ISO 8608 Target')
+        
+        ax_psd.set_title(f"PSD: {label.split(' (')[0]}", fontsize=11, fontweight='bold')
+        ax_psd.set_xlabel("Spatial Frequency (cycles/m)", fontsize=9)
+        ax_psd.set_ylabel("PSD (m³)", fontsize=9)
+        ax_psd.grid(True, which="both", linestyle='--', alpha=0.5)
+        ax_psd.legend(loc='lower left', fontsize=8)
     
     fig2.suptitle("2D Spatial Isotropy Verification (Non-Origin Offset Slices)", fontsize=15, fontweight='bold', y=0.98)
     plt.tight_layout()
