@@ -17,8 +17,8 @@ class InfiniteRoadFMU(Fmi2Slave):
         self.road_class = 3  # 1=A, 2=B, 3=C, 4=D, 5=E, 0=Custom Gd_n0
         self.Gd_n0 = 256e-6
         self.w = 2.0
-        self.f_min = 0.005
-        self.f_max = 100.0
+        self.f_min = 0.01
+        self.f_max = 2.0
         self.Nf = 512
         self.Ntheta = 32
         

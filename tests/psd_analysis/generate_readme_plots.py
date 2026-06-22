@@ -34,16 +34,16 @@ def main():
     road_class = 3  # Class C
     Nf = 512
     Ntheta = 32
-    f_min = 0.005
-    f_max = 100.0
+    f_min = 0.01
+    f_max = 2.0
     
     # 1. 1D C-Type Profile Plot (500m length, dx=0.002m, generated via IFFT with random phases)
     print("Generating 1D Class C profile data via IFFT...", flush=True)
-    slice_length = 10000.0
-    dx = 0.005
+    slice_length = 5000.0
+    dx = 0.25
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
-    nperseg = 40000
+    nperseg = 400
     
     Gd_n0 = 256e-6
     w = 2.0
@@ -126,20 +126,17 @@ def main():
         ("Slice D (135° from (4500,500)m)", 4500.0, 500.0, 135.0, '#e377c2')
     ]
     
-    slice_len_2d = 10000.0
-    dx_2d = 0.005
+    slice_len_2d = 5000.0
+    dx_2d = 0.25
     N_slice_2d = int(slice_len_2d / dx_2d)
     fs_2d = 1.0 / dx_2d
-    nperseg_2d = 40000
+    nperseg_2d = 400
     
-    s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False) # 500m long slices
-    slice_psds = []
+    s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False)
     
-    fig2 = plt.figure(figsize=(18, 9.5))
-    gs = fig2.add_gridspec(2, 3, width_ratios=[1.3, 1.0, 1.0])
-    
-    # Left Panel: 2D Elevation contour map
-    ax_map = fig2.add_subplot(gs[:, 0])
+    # 2.1 Draw 2D Elevation Map with Slice Trajectories
+    print("Generating 2D Map plot...", flush=True)
+    fig_map, ax_map = plt.subplots(figsize=(10, 8.5))
     im = ax_map.imshow(
         Z_grid, 
         extent=[0, 5000.0, 0, 5000.0], 
@@ -147,22 +144,21 @@ def main():
         cmap='terrain', 
         aspect='equal'
     )
-    ax_map.set_title("2D Elevation Map with Slice Trajectories", fontsize=13, fontweight='bold')
+    ax_map.set_title("2D Elevation Map with Slice Trajectories", fontsize=14, fontweight='bold')
     ax_map.set_xlabel("Longitudinal Position X (m)")
     ax_map.set_ylabel("Lateral Position Y (m)")
-    cbar = fig2.colorbar(im, ax=ax_map, fraction=0.046, pad=0.04)
+    cbar = fig_map.colorbar(im, ax=ax_map, fraction=0.046, pad=0.04)
     cbar.set_label("Elevation Z (m)")
     
+    # Plot trajectories and query slices
+    slice_data = []
     for label, sx, sy, deg, color in slices_def:
         rad = np.deg2rad(deg)
-        # Compute coordinates for plotting trajectory
         px = sx + s_slice * np.cos(rad)
         py = sy + s_slice * np.sin(rad)
-        
-        # Draw on map (decimated for visual clarity and performance)
         ax_map.plot(px[::100], py[::100], color=color, linewidth=2.5, label=label)
         
-        # Query slice profile using FMU
+        # Query slice profile
         print(f"Querying {label}...", flush=True)
         z_slice = fmu_query.query_profile_parallel(
             px, py, num_threads=8, seed=seed,
@@ -171,54 +167,63 @@ def main():
         
         # Compute PSD
         freqs_s, psd_s = custom_welch(z_slice, fs=fs_2d, nperseg=nperseg_2d)
-        slice_psds.append((label, freqs_s[1:], psd_s[1:], color))
+        slice_data.append((label, px, py, z_slice, freqs_s[1:], psd_s[1:], color))
         
     ax_map.legend(loc='upper right', fontsize=8.5)
     ax_map.grid(True, linestyle='--', alpha=0.4)
     ax_map.set_xlim(0, 5000.0)
     ax_map.set_ylim(0, 5000.0)
-    
-    # Right Panels: 4 separate PSD subplots
-    ax_psd_list = [
-        fig2.add_subplot(gs[0, 1]), # top left of grid
-        fig2.add_subplot(gs[0, 2]), # top right of grid
-        fig2.add_subplot(gs[1, 1]), # bottom left of grid
-        fig2.add_subplot(gs[1, 2])  # bottom right of grid
-    ]
-    
-    for idx, (label, fs_s, ps_s, color) in enumerate(slice_psds):
-        ax_psd = ax_psd_list[idx]
-        ax_psd.loglog(fs_s, ps_s, color=color, alpha=0.8, linewidth=1.5, label='Welch PSD')
-        
-        # Theoretical target line
-        target_psd_slice = C1 * (fs_s**(-w))
-        ax_psd.loglog(fs_s, target_psd_slice, color='black', linestyle='--', linewidth=2.0, label='ISO 8608 Target')
-        
-        ax_psd.set_title(f"PSD: {label.split(' (')[0]}", fontsize=11, fontweight='bold')
-        ax_psd.set_xlabel("Spatial Frequency (cycles/m)", fontsize=9)
-        ax_psd.set_ylabel("PSD (m³)", fontsize=9)
-        ax_psd.grid(True, which="both", linestyle='--', alpha=0.5)
-        ax_psd.legend(loc='lower left', fontsize=8)
-    
-    fig2.suptitle("2D Spatial Isotropy Verification (Non-Origin Offset Slices)", fontsize=15, fontweight='bold', y=0.98)
     plt.tight_layout()
     
-    output_2d = os.path.join(script_dir, "readme_2d_slices.png")
-    plt.savefig(output_2d, dpi=150)
-    plt.close(fig2)
-    print(f"Saved 2D plot to: {output_2d}", flush=True)
+    output_2d_map = os.path.join(script_dir, "readme_2d_map.png")
+    plt.savefig(output_2d_map, dpi=150)
+    plt.close(fig_map)
+    print(f"Saved 2D map plot to: {output_2d_map}", flush=True)
     
-    # Copy both plots to artifact folder for user display
+    # Get artifact dir
     artifact_dir = os.environ.get("ANTIGRAVITY_ARTIFACT_DIR")
     if not artifact_dir:
         artifact_dir = r"C:\Users\novo\.gemini\antigravity\brain\fd4ff96c-fd17-4c02-94be-eb8b0fc6fd62"
-    try:
-        os.makedirs(artifact_dir, exist_ok=True)
-        shutil.copy(output_1d, os.path.join(artifact_dir, "readme_1d_road.png"))
-        shutil.copy(output_2d, os.path.join(artifact_dir, "readme_2d_slices.png"))
-        print(f"Successfully copied readme plots to artifact directory: {artifact_dir}", flush=True)
-    except Exception as e:
-        print(f"Could not copy readme plots to artifact directory: {e}")
+    os.makedirs(artifact_dir, exist_ok=True)
+    shutil.copy(output_2d_map, os.path.join(artifact_dir, "readme_2d_map.png"))
+    
+    # 2.2 Generate 4 separate slice plots (side-by-side Elevation & PSD)
+    for label, px, py, z_slice, freqs_s, psd_s, color in slice_data:
+        name_clean = label.split(' (')[0].replace(" ", "_").lower()
+        print(f"Plotting and saving {name_clean}...", flush=True)
+        
+        fig_s, axes_s = plt.subplots(1, 2, figsize=(15, 6))
+        
+        # Left Panel: Road Profile Height
+        axes_s[0].plot(s_slice, z_slice, color=color, linewidth=1.0)
+        axes_s[0].set_title(f"{label.split(' (')[0]} Elevation Profile", fontsize=13, fontweight='bold')
+        axes_s[0].set_xlabel("Distance along slice (m)")
+        axes_s[0].set_ylabel("Elevation Z (m)")
+        axes_s[0].grid(True, linestyle='--', alpha=0.5)
+        
+        # Right Panel: PSD comparison
+        axes_s[1].loglog(freqs_s, psd_s, color='#7f7f7f', alpha=0.8, linewidth=1.2, label='Welch PSD (Generated Slice)')
+        target_psd_slice = C1 * (freqs_s**(-w))
+        axes_s[1].loglog(freqs_s, target_psd_slice, color='#d62728', linestyle='--', linewidth=2.0, label='ISO 8608 Target')
+        axes_s[1].set_title("Power Spectral Density (PSD) Comparison", fontsize=13, fontweight='bold')
+        axes_s[1].set_xlabel("Spatial Frequency (cycles/m)")
+        axes_s[1].set_ylabel("PSD (m³)")
+        axes_s[1].grid(True, which="both", linestyle='--', alpha=0.5)
+        axes_s[1].legend()
+        
+        fig_s.suptitle(f"2D Spatial Isotropy Verification - {label}", fontsize=15, fontweight='bold', y=0.98)
+        plt.tight_layout()
+        
+        output_slice = os.path.join(script_dir, f"readme_{name_clean}.png")
+        plt.savefig(output_slice, dpi=150)
+        plt.close(fig_s)
+        
+        # Copy to artifact folder
+        shutil.copy(output_slice, os.path.join(artifact_dir, f"readme_{name_clean}.png"))
+        
+    # Copy 1D plot to artifact folder too
+    shutil.copy(output_1d, os.path.join(artifact_dir, "readme_1d_road.png"))
+    print("Successfully copied all plots to artifact directory.", flush=True)
 
 if __name__ == "__main__":
     main()

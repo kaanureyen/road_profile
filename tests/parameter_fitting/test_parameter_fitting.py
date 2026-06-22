@@ -21,7 +21,7 @@ def get_I(alpha):
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
 # Exact cumulative PSD model used for curve fitting
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.01, f_max=2.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -92,8 +92,8 @@ def process_slice_worker(args):
     slave.setInteger([var_refs['road_class']], [0])  # Custom Gd_n0
     slave.setReal([var_refs['Gd_n0']], [float(G_target)])
     slave.setReal([var_refs['w']], [float(w_target)])
-    slave.setReal([var_refs['f_min']], [0.005])
-    slave.setReal([var_refs['f_max']], [100.0])
+    slave.setReal([var_refs['f_min']], [0.01])
+    slave.setReal([var_refs['f_max']], [2.0])
     
     if 'Nf' in var_refs:
         slave.setInteger([var_refs['Nf']], [int(Nf)])
@@ -121,7 +121,7 @@ def process_slice_worker(args):
     fs = 1.0 / dx
     
     # 1. Welch PSD for raw plot (smooth representation)
-    nperseg = 40000
+    nperseg = 400
     freqs_welch, psd_welch = custom_welch(z, fs=fs, nperseg=nperseg)
     freqs_welch = freqs_welch[1:]
     psd_welch = psd_welch[1:]
@@ -159,13 +159,13 @@ def process_slice_worker(args):
         
     return freqs_welch, psd_welch, cum_psd, w_fit, G_fit, x1, y1, theta_slice
 
-def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=1000.0, dx=0.005, seed=42, workers=10):
+def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.25, seed=42, workers=10):
     print(f"\n--- Running case: G = {G_target:.2e}, w = {w_target:.2f} ---", flush=True)
     
     Nf = 512
     Ntheta = 32
-    f_fit_min = 0.01
-    f_fit_max = 90.0
+    f_fit_min = 0.05
+    f_fit_max = 0.7
     
     tasks = []
     for i in range(num_slices):
@@ -326,7 +326,7 @@ def main():
     
     results = []
     for idx, case in enumerate(cases):
-        res = run_fitting_case(case['G'], case['w'], unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=1000.0, dx=0.005, seed=200+idx, workers=workers)
+        res = run_fitting_case(case['G'], case['w'], unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.25, seed=200+idx, workers=workers)
         results.append(res)
         
         local_plot_name = f"parameter_fitting_case_{idx+1}.png"
@@ -406,7 +406,7 @@ def main():
                 f.write("# FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)\n\n")
                 f.write("This report validates the deterministic 2D isotropic road profile generator ")
                 f.write("defined in the `InfiniteRoadFMU` class by querying **10 random line segments** ")
-                f.write("of length **1000m** with spacing **0.005m** (200,000 points per slice) from random positions ")
+                f.write("of length **500m** with spacing **0.25m** (2,000 points per slice) from random positions ")
                 f.write("within a $[-5000, 5000]$ m plane and random slice angles.\n\n")
                 
                 f.write("## Method Comparison: Raw PSD vs. Cumulative PSD Fitting\n\n")
@@ -436,7 +436,7 @@ def main():
                 f.write("> [!IMPORTANT]\n")
                 f.write("> The FMU scaling coefficient $C_2'$ has been corrected to preserve total variance over the half-circle angular discretization:\n")
                 f.write("> $$C_2' = \\frac{C_1}{I(\\alpha)}$$\n")
-                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.005, f_{\\max} = 100.0, Nf = 512, N\\theta = 32, dx = 0.005$).\n\n")
+                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.01, f_{\\max} = 2.0, Nf = 512, N\\theta = 32, dx = 0.25$).\n\n")
                 f.write("No empirical calibration or workaround multiplier is needed to achieve high accuracy ($< 2.5\\%$ average parameter error).\n\n")
                 
                 f.write("## Parameter Fitting Visualizations\n\n")

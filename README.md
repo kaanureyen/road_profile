@@ -2,7 +2,7 @@
 
 This repository contains a Functional Mock-up Unit (FMU) that dynamically generates a 2D infinite, isotropic, and deterministic road profile following the **ISO 8608** standard. 
 
-The FMU is compliant with the **FMI 2.0 Co-Simulation standard** and is simplified to a single query point $(x, y) \rightarrow z$. To simulate a full 4-wheel vehicle, the multibody simulator instantiates 4 separate instances of this FMU (one for each tire contact patch) using the same `seed` parameter, ensuring perfect cross-wheel spatial determinism.
+The FMU is compliant with the **FMI 2.0 Co-Simulation standard** and is simplified to a query point $(x, y) \rightarrow z$. To simulate a full 4-wheel vehicle, the multibody simulator instantiates 4 separate instances of this FMU (one for each tire contact patch) using the same `seed` parameter, ensuring perfect cross-wheel spatial determinism.
 
 ---
 
@@ -14,7 +14,7 @@ $$G_d(n) = G_d(n_0) \left( \frac{n}{n_0} \right)^{-w}$$
 Where:
 - $n$: Spatial frequency (cycles/m).
 - $n_0 = 0.1$ cycles/m: Reference spatial frequency.
-- $w = 2.0$: Spatial frequency exponent (controlling the slope of the power spectrum).
+- $w = 2.0$: Spatial frequency exponent.
 - $G_d(n_0)$: Reference displacement PSD (roughness coefficient) at $n_0$, defining the road class:
 
 | Road Class | Description | $G_d(n_0) \times 10^{-6}$ ($\text{m}^3$) |
@@ -27,76 +27,43 @@ Where:
 
 ---
 
-### 2. Mathematical Derivation of the 2D Isotropic Wave Field
+## 2. Mathematical Formulation
 To generate a 2D isotropic surface where a 1D slice in *any* direction matches the ISO 8608 power law, we utilize the **Spectral Representation Method (Sum-of-Sinusoids)**.
 
-### Continuous 2D PSD Projection
-In 2D isotropic coordinate space, spatial frequency components are defined as:
-$$f_x = f_r \cos\theta, \quad f_y = f_r \sin\theta$$
-where $f_r$ is the radial spatial frequency and $\theta$ is the spatial angle. 
+### Isotropic 2D PSD Projection
+A 1D slice along any direction corresponds to integrating the 2D PSD $S_{2D}(f_x, f_y)$ over the transverse frequency $f_y$. Assuming isotropy, $S_{2D}(f_x, f_y) = S_{2D}(f_r) = C_2 f_r^{-\alpha}$ (where $\alpha = w + 1 = 3.0$), which yields:
+$$S_{1D}(f_x) = 2 \int_{-\infty}^{\infty} S_{2D}(f_x, f_y) df_y = 2 C_2 f_x^{-w} I(\alpha)$$
 
-A 1D slice along any direction (e.g., $x$) corresponds to integrating the 2D PSD $S_{2D}(f_x, f_y)$ over the transverse frequency $f_y$:
-$$S_{1D}(f_x) = 2 \int_{-\infty}^{\infty} S_{2D}(f_x, f_y) df_y$$
-
-Assuming isotropy, $S_{2D}(f_x, f_y) = S_{2D}(f_r)$. Setting $S_{2D}(f_r) = C_2 f_r^{-\alpha}$ (where $\alpha = w + 1 = 3.0$), we make the variable substitution $f_y = f_x t$, which yields:
-$$S_{1D}(f_x) = 2 \int_{-\infty}^{\infty} C_2 (f_x^2 + f_x^2 t^2)^{-\alpha/2} f_x dt = 2 C_2 f_x^{-(\alpha-1)} \int_{-\infty}^{\infty} (1+t^2)^{-\alpha/2} dt$$
-
-This simplifies to:
-$$S_{1D}(f_x) = 2 C_2 f_x^{-w} I(\alpha)$$
 where $I(\alpha) = \int_{-\infty}^{\infty} (1+t^2)^{-\alpha/2} dt$ is a standard numerical integral.
 
 ### Scaling Factor and Half-Circle Integration
-To match the target ISO 8608 single-sided 1D displacement PSD $S_{1D}(f) = C_1 f^{-w}$ (where $C_1 = G_d(n_0) n_0^w$), the physical relation requires $2 C_2 I(\alpha) = C_1 \implies C_2 = \frac{C_1}{2 I(\alpha)}$ when integrating over the entire $2\pi$ circle.
-
-However, since a wave propagating at angle $\theta + \pi$ is spatially collinear with a wave at $\theta$ (just with an independent random phase), the full-circle $[0, 2\pi)$ formulation contains redundant propagation axes. 
-
-By restricting the angular discretization to the half-circle $[0, \pi)$, we eliminate this redundancy. To preserve the total surface variance and target PSD, the continuous power spectral density is doubled, resulting in the continuous scaling coefficient:
+To match the target ISO 8608 single-sided 1D displacement PSD $S_{1D}(f) = C_1 f^{-w}$ (where $C_1 = G_d(n_0) n_0^w$), the continuous scaling factor $C_2'$ is defined for the half-circle domain $[0, \pi)$:
 $$C_2' = \frac{C_1}{I(\alpha)}$$
 
-Our sum-of-sinusoids model generates independent random phases $\phi \sim \mathcal{U}(0, 2\pi)$ and distributes the spatial angles uniformly over the range $[0, \pi)$. Because opposite directions are omitted, each of the $N_\theta$ angular bins represents a unique wave propagation axis. This doubles the angular resolution for a given $N_\theta$, making the generated 2D surface more isotropic and reducing directional bias.
-
-Using this updated scaling coefficient, the average PSD of the projected slices converges exactly to the target ISO 8608 power law. The codebase incorporates this correct coefficient, achieving minimal statistical error ($<1.5\%$) across all road classes after calibration.
+By restricting the angular discretization to $[0, \pi)$ and doubling the power density, we eliminate collinear propagation redundancy, double the angular resolution for a given $N_\theta$, and guarantee that the average PSD of the projected slices converges exactly to the target ISO 8608 power law.
 
 ---
 
 ## 3. Why 2D is Probabilistic vs. 1D is Deterministic with IFFT
-* **1D Generation (Deterministic via IFFT)**: In 1D road generation using the Inverse Fast Fourier Transform (IFFT), you directly populate the discrete frequency bins with the exact target PSD magnitudes and apply random phases. This ensures that the generated road profile matches the target power spectral density **exactly** (with zero magnitude variance).
-* **2D Generation (Probabilistic)**: A 2D isotropic road profile is a continuous random surface. When a 1D slice is projected out of this 2D wave field, it represents a linear slice across a multi-directional isotropic grid of wave components. Because the waves are distributed across a continuous spatial grid at random angles and phases, any single 1D slice will experience statistical leakage, wave cancellation, and constructive/destructive interference. 
-  Consequently, the PSD of an individual slice is a **random variable**. While any single slice may have minor fluctuations from the target, the **expected value (mean)** of the PSD over multiple realizations converges perfectly to the ISO 8608 curve.
+* **1D Generation (Deterministic via IFFT)**: In 1D road generation using the Inverse Fast Fourier Transform (IFFT), discrete frequency bins are directly populated with the exact target PSD magnitudes. This ensures that the generated road profile matches the target PSD **exactly** (with zero variance).
+* **2D Generation (Probabilistic)**: A 2D isotropic road profile is a continuous random surface. When a 1D slice is projected out of this 2D wave field, it represents a linear slice across a multi-directional isotropic grid of wave components. Because the waves are distributed across a continuous spatial grid at random angles and phases, any single 1D slice will experience statistical leakage and interference. Consequently, the PSD of an individual slice is a **random variable**. While any single slice may have minor fluctuations from the target, the **expected value (mean)** of the PSD over multiple realizations converges perfectly to the ISO 8608 curve.
 
 ---
 
-### 4. Architectural Decisions & Optimization
+## 4. Implementation Details
 
-1. **Sum-of-Sinusoids (Shinozuka Method) vs. Grid-Based FFT & Caching**:
-   * *Grid-Based FFT & Caching*: Pre-generating a discrete 2D mesh of height coordinates requires immense memory (e.g., 12.8 GB for a 1 km x 1 km grid at 0.025 m resolution). Alternatively, dynamically generating and caching 2D grid blocks on the fly to follow the vehicle introduces severe code complexity, boundary-transition interpolation logic, and execution latency spikes. Furthermore, if a vehicle spins, slides, or travels in arbitrary non-linear trajectories, tire contact patches sweep unpredictable paths across the 2D plane, rendering narrow path pre-calculation impossible.
-   * *Analytical Procedural Math*: Height $z(x, y)$ is evaluated analytically at the exact tire coordinates on demand. It is truly memoryless ($O(1)$ RAM footprint, storing only $\sim 130$ KB of wave parameter states), spatially infinite (no domain or boundary limits), and requires zero grid-paging or boundary checks. Even if the vehicle spins, drifts, or takes arbitrary 2D trajectories, the height is computed instantly in $\approx 6\ \mu\text{s}$ with zero boundary-crossing or caching overhead.
+1. **Analytical Procedural Math (Sum-of-Sinusoids / Shinozuka Method)**:
+   * Height $z(x, y)$ is evaluated analytically at the exact tire coordinates on demand. It is memoryless ($O(1)$ RAM footprint), spatially infinite (no domain or boundary limits), and requires zero grid caching.
 2. **Native C++ Implementation (FMI 2.0 Compliance)**:
-   * To prevent the C-to-Python ctypes wrapper overhead (~170 $\mu$s per time step), the production FMU is implemented in native C++ ([cpp_fmu/src/InfiniteRoadFMU.cpp](cpp_fmu/src/InfiniteRoadFMU.cpp)). This makes it 100% self-contained and Python-independent.
-3. **Float-Precision Conversion**:
-   * Replaced internal double-precision math with single-precision floating-point (`float`). This halves memory bandwidth and allows the CPU to process twice as many calculations per SIMD register.
-4. **Minimax Cosine Polynomial & AVX2 SIMD Autovectorization**:
-   * Standard library `std::cos` calls are slow when executed sequentially. Instead, we use a branchless 6th-degree minimax polynomial approximation evaluated via Horner's method. 
-   * Compiled with `/arch:AVX2 /fp:fast` flags, the MSVC compiler auto-vectorizes this register-only loop to calculate 8 cosine values in parallel per clock cycle, accelerating computation by **28x** over scalar execution.
+   * The production FMU is implemented in native C++ ([cpp_fmu/src/InfiniteRoadFMU.cpp](cpp_fmu/src/InfiniteRoadFMU.cpp)) for zero Python/ctypes wrapper overhead.
+3. **Minimax Cosine Polynomial & AVX2 SIMD Autovectorization**:
+   * Instead of standard `std::cos`, the C++ code uses a fast minimax polynomial approximation. Compiled with `/arch:AVX2 /fp:fast` flags, the MSVC compiler auto-vectorizes this to calculate 4/8 cosine values in parallel per clock cycle.
+4. **Double Precision**:
+   * The calculations utilize double-precision floating-point (`double`) representation to match the FMI standard (`fmi2Real`) and maintain numerical precision.
 
 ---
 
-## 5. Performance Benchmarks
-
-Evaluating a query of **25,000 points** along a road slice (16,384 wave components per query) yields the following performance comparison:
-
-| Importer Wrapper | FMU Implementation | Total Time (s) | Avg Query Time ($\mu\text{s}$/point) | Speedup |
-| :--- | :--- | :---: | :---: | :---: |
-| **C++ Wrapper** | **C++ FMU (Optimized Minimax)** | **0.158 s** | **6.33 $\mu\text{s}$** | **31.3x** (Best) |
-| **Python (FMPy)** | **C++ FMU (Optimized Minimax)** | 0.293 s | 11.73 $\mu\text{s}$ | 16.9x |
-| **Python (FMPy)** | **Python FMU** | 4.969 s | 198.76 $\mu\text{s}$ | 1.00x (Baseline) |
-| **C++ Wrapper** | **Python FMU** | 4.976 s | 199.04 $\mu\text{s}$ | 1.00x |
-
-*Note: With dynamic memory lookup tables (LUTs) disabled, the C++ FMU's execution time is 99.88% dominated by pure register arithmetic, with FMI wrapper overhead contributing only **7.3 nanoseconds** (0.11%) per query.*
-
----
-
-## 6. FMI Interface Specification
+## 5. FMI Interface Specification
 
 ### Inputs
 * `x` (Real): Longitudinal coordinate (m)
@@ -109,40 +76,53 @@ Evaluating a query of **25,000 points** along a road slice (16,384 wave componen
 * `seed` (Integer, default = 42): Pseudorandom seed for phase generation.
 * `road_class` (Integer, default = 3): ISO 8608 Class (1=A, 2=B, 3=C, 4=D, 5=E, 0=Custom Gd_n0).
 * `Gd_n0` (Real, default = 256e-6 $\text{m}^3$): Reference displacement PSD at $n_0=0.1$ cycles/m (active when `road_class=0`).
-* `w` (Real, default = 2.0): Spectral exponent.
-* `f_min` (Real, default = 0.005 cycles/m): Lower frequency cutoff.
-* `f_max` (Real, default = 100.0 cycles/m): Upper frequency cutoff.
+* `w` (Real, default = 2.0): Exponent parameter.
+* `f_min` (Real, default = 0.01 cycles/m): Lower frequency cutoff.
+* `f_max` (Real, default = 2.0 cycles/m): Upper frequency cutoff.
+* `Nf` (Integer, default = 512): Number of discrete frequency bins.
+* `Ntheta` (Integer, default = 32): Number of discrete angular bins.
+* `disable_math` (Integer, default = 0): Set to 1 to bypass evaluation for profiling.
 
 > [!NOTE]
 > **Frequency Cutoff Selection Reasoning**
-> The defaults `f_min = 0.005` cycles/m (200m wavelength) and `f_max = 100.0` cycles/m (1cm wavelength) are chosen to cover a vehicle speed range of **5 to 300 km/h** and a temporal frequency range of **0.5 to 100 Hz**:
-> * **Upper limit (`f_max = 100.0` cycles/m / 1 cm):** At a minimum speed of $5\text{ km/h} \approx 1.39\text{ m/s}$, resolving a temporal frequency of $100\text{ Hz}$ requires a spatial frequency of $f = \frac{100\text{ Hz}}{1.39\text{ m/s}} = 72\text{ cycles/m}$. Setting `f_max = 100.0` cycles/m (wavelength 10 mm) safely covers this.
-> * **Lower limit (`f_min = 0.005` cycles/m / 200 m):** At a maximum speed of $300\text{ km/h} \approx 83.33\text{ m/s}$, resolving a temporal frequency of $0.5\text{ Hz}$ requires a spatial frequency of $f = \frac{0.5\text{ Hz}}{83.33\text{ m/s}} = 0.006\text{ cycles/m}$. Setting `f_min = 0.005` cycles/m (wavelength 200 m) safely covers this.
+> The defaults `f_min = 0.01` cycles/m (100m wavelength) and `f_max = 2.0` cycles/m (0.5m wavelength) are chosen to match the spatial discretization spacing $dx = 0.25\text{ m}$ and Welch window size $\text{nperseg} = 400$:
+> * **Upper limit (`f_max = 2.0` cycles/m):** Derived from the spatial Nyquist frequency $f_{\text{Nyquist}} = \frac{1}{2 \cdot dx} = \frac{1}{2 \cdot 0.25} = 2.0\text{ cycles/m}$.
+> * **Lower limit (`f_min = 0.01` cycles/m):** Derived from the minimum frequency resolution of the Welch segment size $f_{\text{low}} = \frac{1}{dx \cdot \text{nperseg}} = \frac{1}{0.25 \cdot 400} = 0.01\text{ cycles/m}$.
 
 ---
 
-## 7. Visual Verification (1D Profile & 2D Isotropy)
+## 6. Visual Verification (1D Profile & 2D Isotropy)
 
 ### 1D Class C Road Profile
-To verify the FMU's generation of standard road classes, a 200m longitudinal profile (slice parallel to the X-axis) is queried on a Class C road ($G_d(n_0) = 256\times 10^{-6}\text{ m}^3$, $w=2.0$). 
-
-* **Elevation Profile**: The left panel shows the continuous, deterministic vertical displacement $z$ along the length of the road.
-* **Power Spectral Density**: The right panel shows the Welch-averaged spatial PSD compared directly to the analytical ISO 8608 Class C target. The generated profile tracks the target spectral slope ($w=2.0$) and roughness scaling exactly.
+To verify the FMU's generation of standard road classes, a 5000m longitudinal profile (slice parallel to the X-axis) is queried on a Class C road ($G_d(n_0) = 256\times 10^{-6}\text{ m}^3$, $w=2.0$). 
+* **Elevation Profile**: The left panel shows the continuous, vertical displacement $z$ along the length of the road.
+* **Power Spectral Density**: The right panel shows the Welch-averaged spatial PSD compared directly to the analytical ISO 8608 Class C target.
 
 ![1D Class C Profile & Welch PSD](tests/psd_analysis/readme_1d_road.png)
 
 ### 2D Isotropy & Homogeneity at Offset Locations
 A critical requirement of the 2D road profile is **isotropy**: a slice taken in *any* direction at *any* coordinate offset must yield identical spatial frequency properties. 
 
-To demonstrate this, we generate a 500m x 500m Class C elevation map and evaluate 4 linear slices of length 200m at different angles (0°, 45°, 90°, 135°) starting from offset (non-origin) coordinates:
-* **Slice Trajectories**: The left panel displays the slice paths overlaid on the 2D elevation contour map. None of the slices pass through the coordinate origin.
-* **PSD Comparison**: The right panel plots the Welch PSDs for all 4 slices alongside the theoretical ISO 8608 Class C target. The spectral density curves overlay one another perfectly across the entire frequency range, verifying that the spatial homogeneity and isotropy are uniform across the entire 2D surface.
+To demonstrate this, we generate a 5000m x 5000m Class C elevation map and evaluate 4 linear slices of length 5000m at different angles (0°, 45°, 90°, 135°) starting from offset (non-origin) coordinates:
 
-![2D Isotropic Slices at Offset Locations](tests/psd_analysis/readme_2d_slices.png)
+**Trajectory Map:**
+![2D Map with Slice Trajectories](tests/psd_analysis/readme_2d_map.png)
+
+**Slice A (0° at Y=1000m):**
+![Slice A Profile and PSD](tests/psd_analysis/readme_slice_a.png)
+
+**Slice B (45° from (500,500)m):**
+![Slice B Profile and PSD](tests/psd_analysis/readme_slice_b.png)
+
+**Slice C (90° at X=3500m):**
+![Slice C Profile and PSD](tests/psd_analysis/readme_slice_c.png)
+
+**Slice D (135° from (4500,500)m):**
+![Slice D Profile and PSD](tests/psd_analysis/readme_slice_d.png)
 
 ---
 
-## 8. Repository Contents
+## 7. Repository Contents
 * [infinite_road_fmu.py](infinite_road_fmu.py): Python source code defining the FMU model.
 * [InfiniteRoadFMU.fmu](InfiniteRoadFMU.fmu): Compiled FMI 2.0 Co-Simulation compliant FMU package.
 * [run_tests.py](run_tests.py): Verification suite runner that executes all test suites and generates plots and reports.
@@ -155,7 +135,7 @@ To demonstrate this, we generate a 500m x 500m Class C elevation map and evaluat
 
 ---
 
-## 9. How to Compile & Run
+## 8. How to Compile & Run
 
 ### Prerequisites
 To compile the C++ FMU and execute verification tests, install:
@@ -171,13 +151,10 @@ To compile the C++ shared library (`InfiniteRoadFMU.dll`) and package it into `I
 ```bash
 python build_cpp_fmu.py
 ```
-This script will:
-1. Configure and run a CMake build in the `cpp_fmu/build/` directory in Release mode.
-2. Compile `InfiniteRoadFMU.cpp` with `/arch:AVX2 /fp:fast` optimizations.
-3. Stage the compiled DLL, create an FMI 2.0-compliant `modelDescription.xml`, and package them into a compressed `.fmu` archive at the workspace root.
+This compilation is configured with `/arch:AVX2 /fp:fast` optimizations.
 
 ### Running the Full Verification Suite
-To execute all verification scripts (including FMI co-simulation, 100 km homogeneity verification, parameter fitting, and PSD/terrain analysis) and regenerate all plots, run:
+To execute all verification scripts (including FMI co-simulation, homogeneity verification, parameter fitting, and PSD/terrain analysis) and regenerate all plots, run:
 ```bash
 python run_tests.py
 ```

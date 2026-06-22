@@ -21,7 +21,7 @@ def get_I(alpha):
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
 # Exact cumulative PSD model used for curve fitting
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.01, f_max=2.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -93,8 +93,8 @@ def process_slice_worker(args):
     slave.setInteger([var_refs['road_class']], [0])  # Custom Gd_n0
     slave.setReal([var_refs['Gd_n0']], [float(G_target)])
     slave.setReal([var_refs['w']], [float(w_target)])
-    slave.setReal([var_refs['f_min']], [0.005])
-    slave.setReal([var_refs['f_max']], [100.0])
+    slave.setReal([var_refs['f_min']], [0.01])
+    slave.setReal([var_refs['f_max']], [2.0])
     
     if 'Nf' in var_refs:
         slave.setInteger([var_refs['Nf']], [int(Nf)])
@@ -122,7 +122,7 @@ def process_slice_worker(args):
     fs = 1.0 / dx
     
     # 1. Welch PSD for raw plot visualization (smooth)
-    nperseg = 40000
+    nperseg = 400
     freqs_welch, psd_welch = custom_welch(z, fs=fs, nperseg=nperseg)
     freqs_welch = freqs_welch[1:]
     psd_welch = psd_welch[1:]
@@ -168,12 +168,12 @@ def main():
     print(f"FMU Settings: Nf = {Nf}, Ntheta = {Ntheta}", flush=True)
     print(f"Target Road: Class B (G = {G_target*1e6:.1f} um3), w = {w_target:.2f}", flush=True)
     
-    slice_length = 1000.0
-    dx = 0.005
+    slice_length = 500.0
+    dx = 0.25
     
-    # Fit window [0.01, 90.0] cycles/m (wavelengths 100m to 0.011m)
-    f_fit_min = 0.01
-    f_fit_max = 90.0
+    # Fit window [0.05, 0.7] cycles/m
+    f_fit_min = 0.05
+    f_fit_max = 0.7
     
     distances = [0.0, 1000.0, 10000.0, 100000.0] # 0m, 1km, 10km, 100km
     slices_per_dist = 10

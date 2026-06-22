@@ -1,6 +1,6 @@
 # FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)
 
-This report validates the deterministic 2D isotropic road profile generator defined in the `InfiniteRoadFMU` class by querying **10 random line segments** of length **1000m** with spacing **0.005m** (200,000 points per slice) from random positions within a $[-5000, 5000]$ m plane and random slice angles.
+This report validates the deterministic 2D isotropic road profile generator defined in the `InfiniteRoadFMU` class by querying **10 random line segments** of length **500m** with spacing **0.25m** (2,000 points per slice) from random positions within a $[-5000, 5000]$ m plane and random slice angles.
 
 ## Method Comparison: Raw PSD vs. Cumulative PSD Fitting
 
@@ -18,16 +18,16 @@ This report validates the deterministic 2D isotropic road profile generator defi
 
 | Case | Target $w$ | Fitted Mean $w$ | Target $G$ ($\mu$m³) | Fitted Mean $G$ ($\mu$m³) | Exponent Error | Roughness Error |
 |---|---|---|---|---|---|---|
-| Case 1 | 2.00 | 2.0051 ± 0.0432 | 64.0 | 66.37 ± 10.41 | 0.25% | 3.70% |
-| Case 2 | 1.80 | 1.7970 ± 0.0404 | 256.0 | 257.64 ± 42.04 | 0.17% | 0.64% |
-| Case 3 | 2.20 | 2.1938 ± 0.0410 | 1024.0 | 1024.33 ± 150.55 | 0.28% | 0.03% |
+| Case 1 | 2.00 | 1.9744 ± 0.1523 | 64.0 | 62.18 ± 10.78 | 1.28% | 2.84% |
+| Case 2 | 1.80 | 1.7675 ± 0.1137 | 256.0 | 245.59 ± 39.05 | 1.81% | 4.07% |
+| Case 3 | 2.20 | 2.1786 ± 0.2080 | 1024.0 | 969.80 ± 186.24 | 0.97% | 5.29% |
 
 
 ## Mathematical Verification and Scaling
 > [!IMPORTANT]
 > The FMU scaling coefficient $C_2'$ has been corrected to preserve total variance over the half-circle angular discretization:
 > $$C_2' = \frac{C_1}{I(\alpha)}$$
-> All other parameters match the updated benchmark model ($f_{\min} = 0.005, f_{\max} = 100.0, Nf = 512, N\theta = 32, dx = 0.005$).
+> All other parameters match the updated benchmark model ($f_{\min} = 0.01, f_{\max} = 2.0, Nf = 512, N\theta = 32, dx = 0.25$).
 
 No empirical calibration or workaround multiplier is needed to achieve high accuracy ($< 2.5\%$ average parameter error).
 

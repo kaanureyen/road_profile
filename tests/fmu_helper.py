@@ -22,7 +22,7 @@ class FMURoadQuery:
         if hasattr(self, 'unzipdir') and os.path.exists(self.unzipdir):
             shutil.rmtree(self.unzipdir, ignore_errors=True)
 
-    def get_slave(self, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.005, f_max=100.0, Nf=512, Ntheta=32, road_class=0, instance_name="fmu_instance"):
+    def get_slave(self, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.01, f_max=2.0, Nf=512, Ntheta=32, road_class=0, instance_name="fmu_instance"):
         slave = FMU2Slave(
             guid=self.guid,
             unzipDirectory=self.unzipdir,
@@ -67,7 +67,7 @@ class FMURoadQuery:
                 z[i] = slave.getReal([z_ref])[0]
             return z
 
-    def query_profile_parallel(self, px, py, num_threads=8, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.005, f_max=100.0, Nf=512, Ntheta=32, road_class=0):
+    def query_profile_parallel(self, px, py, num_threads=8, seed=42, Gd_n0=256e-6, w=2.0, f_min=0.01, f_max=2.0, Nf=512, Ntheta=32, road_class=0):
         """Query coordinates px, py in parallel using multiple FMI slave instances."""
         from concurrent.futures import ThreadPoolExecutor
         

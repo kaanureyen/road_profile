@@ -36,7 +36,7 @@ def custom_welch(y, fs, nperseg):
     return freqs, psd
 
 # Exact isotropic cumulative projection model
-def exact_isotropic_cum_model(f_array, C1, w, f_min=0.005, f_max=100.0):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.01, f_max=2.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
@@ -61,13 +61,13 @@ def main():
     
     # Initialize FMU query helper
     fmu_query = FMURoadQuery()
-    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.005, f_max=100.0, Nf=512, Ntheta=32)
+    slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.01, f_max=2.0, Nf=512, Ntheta=32)
     
-    slice_length = 10000.0
-    dx = 0.005
+    slice_length = 5000.0
+    dx = 0.25
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
-    nperseg = 40000
+    nperseg = 400
     df = fs / nperseg
     
     # Generate 1 slice

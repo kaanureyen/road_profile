@@ -61,8 +61,8 @@ def main():
     road_class = 3  # Class C
     Nf = 512
     Ntheta = 32
-    f_min = 0.005
-    f_max = 100.0
+    f_min = 0.01
+    f_max = 2.0
     
     t0 = time.time()
     

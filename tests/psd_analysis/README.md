@@ -10,7 +10,7 @@ This script validates the spatial frequency representation of sliced profiles fr
 
 The results are compared against:
 1. **Target 1D Analytical PSD**: The theoretical continuous spectrum $S_{1D}(f) = C_1 f^{-w}$.
-2. **Exact Isotropic Cumulative Model**: The mathematically exact cumulative power projection model including the low-frequency band-limit $f_{\min} = 0.005$ cycles/m:
+2. **Exact Isotropic Cumulative Model**: The mathematically exact cumulative power projection model including the low-frequency band-limit $f_{\min} = 0.01$ cycles/m:
    $$\Phi_{\text{exact}}(f) = \frac{2 C_1}{I} \int_{\max(f, f_{\min})}^{f_{\max}} f_{2D}^{-w} \arccos\left(\frac{f}{f_{2D}}\right) df_{2D}$$
 
 ### FMU Parameters Used
@@ -18,8 +18,8 @@ The results are compared against:
 - **`road_class`**: `0` (custom target)
 - **`Gd_n0`**: `64e-6` ($64\ \mu\text{m}^3$, Class B target)
 - **`w`**: `2.0`
-- **`f_min`**: `0.005` cycles/m
-- **`f_max`**: `100.0` cycles/m
+- **`f_min`**: `0.01` cycles/m
+- **`f_max`**: `2.0` cycles/m
 - **`Nf`**: `512`
 - **`Ntheta`**: `32`
 
@@ -36,8 +36,8 @@ This script generates a full 2D terrain elevation profile covering a $500\text{m
 ### FMU Parameters Used
 - **`seed`**: `42`
 - **`road_class`**: `3` (Class C target)
-- **`f_min`**: `0.005` cycles/m
-- **`f_max`**: `100.0` cycles/m
+- **`f_min`**: `0.01` cycles/m
+- **`f_max`**: `2.0` cycles/m
 - **`Nf`**: `512`
 - **`Ntheta`**: `32`
 
