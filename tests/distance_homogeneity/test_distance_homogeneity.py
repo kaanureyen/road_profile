@@ -1,11 +1,15 @@
 import os
 import sys
 import time
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import scipy.integrate as integrate
+from scipy.integrate import IntegrationWarning
 from concurrent.futures import ProcessPoolExecutor
+
+warnings.filterwarnings("ignore", category=IntegrationWarning)
 
 # Add tests/ to path to import fmu_helper
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -17,14 +21,35 @@ def get_I(alpha):
     return np.sum((1.0 + t**2)**(-alpha/2.0)) * dt
 
 # Exact cumulative PSD model used for curve fitting
-def exact_isotropic_cum_model(f_array, C1, w):
+def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
     alpha = w + 1.0
     I_val = get_I(alpha)
     results = []
     for f_val in f_array:
-        val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), f_val, 2000.0)
-        results.append(C1 * (2.0 / I_val) * val)
+        if f_val >= f_max:
+            results.append(0.0)
+        else:
+            val, _ = integrate.quad(lambda f_2D: (f_2D**(-w)) * np.arccos(f_val / f_2D), max(f_val, f_min), f_max)
+            results.append(C1 * (2.0 / I_val) * val)
     return np.array(results)
+
+def custom_welch(y, fs, nperseg):
+    win = np.hanning(nperseg)
+    win_norm = np.sum(win**2)
+    step = nperseg // 2
+    num_segments = (len(y) - nperseg) // step + 1
+    freqs = np.fft.rfftfreq(nperseg, d=1.0/fs)
+    psd_accum = np.zeros(len(freqs))
+    for i in range(num_segments):
+        start = i * step
+        end = start + nperseg
+        seg = y[start:end]
+        seg_detrended = seg - np.mean(seg)
+        seg_windowed = seg_detrended * win
+        fft_seg = np.fft.rfft(seg_windowed)
+        psd_accum += np.abs(fft_seg)**2
+    psd = (2.0 / (fs * win_norm)) * (psd_accum / num_segments)
+    return freqs, psd
 
 # Worker function to process a single slice in parallel using the FMU
 def process_slice_worker(args):
@@ -86,18 +111,11 @@ def process_slice_worker(args):
     slave.terminate()
     slave.freeInstance()
     
-    N_slice = len(s)
     fs = 1.0 / dx
     
-    # Direct FFT with Hanning window over the whole slice
-    win = np.hanning(N_slice)
-    win_norm = np.sum(win**2)
-    z_detrended = z - np.mean(z)
-    z_windowed = z_detrended * win
-    
-    fft_z = np.fft.rfft(z_windowed)
-    freqs = np.fft.rfftfreq(N_slice, d=dx)
-    psd = (2.0 / (fs * win_norm)) * (np.abs(fft_z)**2)
+    # Welch PSD (50% overlap)
+    nperseg = 65536
+    freqs, psd = custom_welch(z, fs=fs, nperseg=nperseg)
     
     freqs = freqs[1:]
     psd = psd[1:]
@@ -256,16 +274,12 @@ def main():
     ax_cum.loglog(freqs_theory, theory_cum, color='black', linestyle='--', linewidth=2.0, label='Theoretical Target')
     
     # Layout and labels
-    ax_psd.axvline(f_fit_min, color='gray', linestyle=':', label='Fit Window')
-    ax_psd.axvline(f_fit_max, color='gray', linestyle=':')
     ax_psd.set_title("Average spatial PSDs at various offsets")
     ax_psd.set_xlabel("Spatial Frequency f (cycles/m)")
     ax_psd.set_ylabel("PSD S(f) (m3)")
     ax_psd.grid(True, which="both", linestyle='--', alpha=0.5)
     ax_psd.legend(loc='lower left')
     
-    ax_cum.axvline(f_fit_min, color='gray', linestyle=':', label='Fit Window')
-    ax_cum.axvline(f_fit_max, color='gray', linestyle=':')
     ax_cum.set_title("Average Cumulative PSDs at various offsets")
     ax_cum.set_xlabel("Spatial Frequency f (cycles/m)")
     ax_cum.set_ylabel("Cumulative PSD (m2)")

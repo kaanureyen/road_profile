@@ -112,7 +112,7 @@ def process_slice_worker(args):
     fs = 1.0 / dx
     
     # Welch PSD (50% overlap)
-    nperseg = 16384
+    nperseg = 65536
     freqs, psd = custom_welch(z, fs=fs, nperseg=nperseg)
     
     freqs = freqs[1:]
