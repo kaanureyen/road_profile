@@ -120,10 +120,10 @@ def main():
     # Define 4 offset slices (not passing through origin)
     # Format: (label, start_x, start_y, angle_deg, color)
     slices_def = [
-        ("Slice A (0° at Y=100m)", 0.0, 100.0, 0.0, '#2ca02c'),
-        ("Slice B (45° from (50,50)m)", 50.0, 50.0, 45.0, '#ff7f0e'),
-        ("Slice C (90° at X=350m)", 350.0, 0.0, 90.0, '#9467bd'),
-        ("Slice D (135° from (450,50)m)", 450.0, 50.0, 135.0, '#e377c2')
+        ("Slice A (0° at Y=1000m)", 0.0, 1000.0, 0.0, '#2ca02c'),
+        ("Slice B (45° from (500,500)m)", 500.0, 500.0, 45.0, '#ff7f0e'),
+        ("Slice C (90° at X=3500m)", 3500.0, 0.0, 90.0, '#9467bd'),
+        ("Slice D (135° from (4500,500)m)", 4500.0, 500.0, 135.0, '#e377c2')
     ]
     
     slice_len_2d = 5000.0
