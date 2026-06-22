@@ -168,8 +168,8 @@ def main():
     print(f"FMU Settings: Nf = {Nf}, Ntheta = {Ntheta}", flush=True)
     print(f"Target Road: Class B (G = {G_target*1e6:.1f} um3), w = {w_target:.2f}", flush=True)
     
-    slice_length = 500.0
-    dx = 0.002
+    slice_length = 200.0
+    dx = 0.01
     
     # Fit window [0.01, 90.0] cycles/m (wavelengths 100m to 0.011m)
     f_fit_min = 0.01

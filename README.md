@@ -124,7 +124,7 @@ Evaluating a query of **25,000 points** along a road slice (16,384 wave componen
 ## 7. Visual Verification (1D Profile & 2D Isotropy)
 
 ### 1D Class C Road Profile
-To verify the FMU's generation of standard road classes, a 500m longitudinal profile (slice parallel to the X-axis) is queried on a Class C road ($G_d(n_0) = 256\times 10^{-6}\text{ m}^3$, $w=2.0$). 
+To verify the FMU's generation of standard road classes, a 200m longitudinal profile (slice parallel to the X-axis) is queried on a Class C road ($G_d(n_0) = 256\times 10^{-6}\text{ m}^3$, $w=2.0$). 
 
 * **Elevation Profile**: The left panel shows the continuous, deterministic vertical displacement $z$ along the length of the road.
 * **Power Spectral Density**: The right panel shows the Welch-averaged spatial PSD compared directly to the analytical ISO 8608 Class C target. The generated profile tracks the target spectral slope ($w=2.0$) and roughness scaling exactly.
@@ -134,7 +134,7 @@ To verify the FMU's generation of standard road classes, a 500m longitudinal pro
 ### 2D Isotropy & Homogeneity at Offset Locations
 A critical requirement of the 2D road profile is **isotropy**: a slice taken in *any* direction at *any* coordinate offset must yield identical spatial frequency properties. 
 
-To demonstrate this, we generate a 500m x 500m Class C elevation map and evaluate 4 linear slices at different angles (0°, 45°, 90°, 135°) starting from offset (non-origin) coordinates:
+To demonstrate this, we generate a 500m x 500m Class C elevation map and evaluate 4 linear slices of length 200m at different angles (0°, 45°, 90°, 135°) starting from offset (non-origin) coordinates:
 * **Slice Trajectories**: The left panel displays the slice paths overlaid on the 2D elevation contour map. None of the slices pass through the coordinate origin.
 * **PSD Comparison**: The right panel plots the Welch PSDs for all 4 slices alongside the theoretical ISO 8608 Class C target. The spectral density curves overlay one another perfectly across the entire frequency range, verifying that the spatial homogeneity and isotropy are uniform across the entire 2D surface.
 

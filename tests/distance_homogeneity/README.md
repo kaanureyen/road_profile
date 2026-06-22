@@ -7,17 +7,17 @@ This report validates the spatial homogeneity and isotropy of the 2D road profil
 - **Target Roughness $G$:** 64.0 $\mu$m³
 - **Target Exponent $w$:** 2.00
 - **Frequencies:** $N_f = 512$, $N_\theta = 32$
-- **Slice Length:** 500.0 m
-- **Sampling Interval $dx$:** 0.002 m
+- **Slice Length:** 200.0 m
+- **Sampling Interval $dx$:** 0.01 m
 
 ## Homogeneity Verification Results
 
 | Distance | Fitted $w$ (Mean $\pm$ Std) | Fitted $G$ ($\mu$m³) (Mean $\pm$ Std) | Target $w$ in $\pm 1$ std? | Target $G$ in $\pm 1$ std? | $w$ Error | $G$ Error |
 |---|---|---|---|---|---|---|
-| 0.0 km | 2.0256 $\pm$ 0.0585 | 70.95 $\pm$ 14.47 | YES | YES | 1.278% | 10.854% |
-| 1.0 km | 1.9972 $\pm$ 0.0699 | 65.20 $\pm$ 16.27 | YES | YES | 0.141% | 1.882% |
-| 10.0 km | 2.0586 $\pm$ 0.0709 | 80.58 $\pm$ 18.01 | YES | YES | 2.928% | 25.913% |
-| 100.0 km | 2.0174 $\pm$ 0.0804 | 70.26 $\pm$ 20.37 | YES | YES | 0.872% | 9.782% |
+| 0.0 km | 1.9860 $\pm$ 0.1101 | 63.57 $\pm$ 22.33 | YES | YES | 0.698% | 0.668% |
+| 1.0 km | 2.0317 $\pm$ 0.0690 | 71.86 $\pm$ 16.75 | YES | YES | 1.584% | 12.279% |
+| 10.0 km | 2.0945 $\pm$ 0.1237 | 87.32 $\pm$ 27.12 | YES | YES | 4.725% | 36.441% |
+| 100.0 km | 2.0507 $\pm$ 0.0645 | 77.12 $\pm$ 15.36 | YES | YES | 2.536% | 20.500% |
 
 
 ## Homogeneity Curves Plot

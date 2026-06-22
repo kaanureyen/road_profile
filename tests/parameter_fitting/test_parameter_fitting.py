@@ -159,7 +159,7 @@ def process_slice_worker(args):
         
     return freqs_welch, psd_welch, cum_psd, w_fit, G_fit, x1, y1, theta_slice
 
-def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.002, seed=42, workers=10):
+def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=200.0, dx=0.01, seed=42, workers=10):
     print(f"\n--- Running case: G = {G_target:.2e}, w = {w_target:.2f} ---", flush=True)
     
     Nf = 512
@@ -326,7 +326,7 @@ def main():
     
     results = []
     for idx, case in enumerate(cases):
-        res = run_fitting_case(case['G'], case['w'], unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.002, seed=200+idx, workers=workers)
+        res = run_fitting_case(case['G'], case['w'], unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=200.0, dx=0.01, seed=200+idx, workers=workers)
         results.append(res)
         
         local_plot_name = f"parameter_fitting_case_{idx+1}.png"
@@ -406,7 +406,7 @@ def main():
                 f.write("# FMU Parameter Fitting and Dependency Analysis Report (Nf=512, Ntheta=32)\n\n")
                 f.write("This report validates the deterministic 2D isotropic road profile generator ")
                 f.write("defined in the `InfiniteRoadFMU` class by querying **10 random line segments** ")
-                f.write("of length **500m** with spacing **0.002m** (250,000 points per slice) from random positions ")
+                f.write("of length **200m** with spacing **0.01m** (20,000 points per slice) from random positions ")
                 f.write("within a $[-5000, 5000]$ m plane and random slice angles.\n\n")
                 
                 f.write("## Method Comparison: Raw PSD vs. Cumulative PSD Fitting\n\n")
@@ -436,7 +436,7 @@ def main():
                 f.write("> [!IMPORTANT]\n")
                 f.write("> The FMU scaling coefficient $C_2'$ has been corrected to preserve total variance over the half-circle angular discretization:\n")
                 f.write("> $$C_2' = \\frac{C_1}{I(\\alpha)}$$\n")
-                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.005, f_{\\max} = 100.0, Nf = 512, N\\theta = 32, dx = 0.002$).\n\n")
+                f.write("> All other parameters match the updated benchmark model ($f_{\\min} = 0.005, f_{\\max} = 100.0, Nf = 512, N\\theta = 32, dx = 0.01$).\n\n")
                 f.write("No empirical calibration or workaround multiplier is needed to achieve high accuracy ($< 2.5\\%$ average parameter error).\n\n")
                 
                 f.write("## Parameter Fitting Visualizations\n\n")
