@@ -94,10 +94,10 @@ struct ModelInstance {
     bool initialized = false;
     bool dirty = true;
 
-    std::vector<float> amps;
-    std::vector<float> kx;
-    std::vector<float> ky;
-    std::vector<float> phis;
+    std::vector<double> amps;
+    std::vector<double> kx;
+    std::vector<double> ky;
+    std::vector<double> phis;
 
     // Cached parameters
     int last_seed = -1;
@@ -206,10 +206,10 @@ void lazy_init(ModelInstance* inst) {
             double th = j * dtheta;
             double phi = rng.uniform(0.0, double_pi);
 
-            inst->amps.push_back((float)amp);
-            inst->kx.push_back((float)(double_pi * fc * std::cos(th)));
-            inst->ky.push_back((float)(double_pi * fc * std::sin(th)));
-            inst->phis.push_back((float)phi);
+            inst->amps.push_back(amp);
+            inst->kx.push_back(double_pi * fc * std::cos(th));
+            inst->ky.push_back(double_pi * fc * std::sin(th));
+            inst->phis.push_back(phi);
         }
     }
 
@@ -227,14 +227,14 @@ void lazy_init(ModelInstance* inst) {
     inst->dirty = false;
 }
 
-inline float fast_cos(float x) {
-    const float inv_two_pi = 0.15915494309189535f;
-    const float two_pi = 6.283185307179586f;
-    float z = x * inv_two_pi;
-    float ip = std::floor(z + 0.5f);
-    float y = x - ip * two_pi;
-    float y2 = y * y;
-    return 1.0f + y2 * (-0.49999999682f + y2 * (0.041666641409f + y2 * (-0.0013888567281f + y2 * (0.000024786700184f + y2 * (-0.00000027246305604f + y2 * 0.0000000017860045536f)))));
+inline double fast_cos(double x) {
+    const double inv_two_pi = 0.15915494309189535;
+    const double two_pi = 6.283185307179586;
+    double z = x * inv_two_pi;
+    double ip = std::floor(z + 0.5);
+    double y = x - ip * two_pi;
+    double y2 = y * y;
+    return 1.0 + y2 * (-0.49999999682 + y2 * (0.041666641409 + y2 * (-0.0013888567281 + y2 * (0.000024786700184 + y2 * (-0.00000027246305604 + y2 * 0.0000000017860045536)))));
 }
 
 double compute_height(ModelInstance* inst, double px, double py) {
@@ -243,21 +243,19 @@ double compute_height(ModelInstance* inst, double px, double py) {
     }
     lazy_init(inst);
 
-    float px_f = (float)px;
-    float py_f = (float)py;
-    float sum = 0.0f;
+    double sum = 0.0;
     
     size_t size = inst->amps.size();
-    const float* amps = inst->amps.data();
-    const float* kx = inst->kx.data();
-    const float* ky = inst->ky.data();
-    const float* phis = inst->phis.data();
+    const double* amps = inst->amps.data();
+    const double* kx = inst->kx.data();
+    const double* ky = inst->ky.data();
+    const double* phis = inst->phis.data();
 
     for (int i = 0; i < (int)size; ++i) {
-        float phase = kx[i] * px_f + ky[i] * py_f + phis[i];
+        double phase = kx[i] * px + ky[i] * py + phis[i];
         sum += amps[i] * fast_cos(phase);
     }
-    return (double)sum;
+    return sum;
 }
 
 extern "C" {
