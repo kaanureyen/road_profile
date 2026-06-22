@@ -130,6 +130,7 @@ def main():
     dx_2d = 0.01
     N_slice_2d = int(slice_len_2d / dx_2d)
     fs_2d = 1.0 / dx_2d
+    nperseg_2d = 50
     
     s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False) # 500m long slices
     slice_psds = []
@@ -167,7 +168,7 @@ def main():
         )
         
         # Compute PSD
-        freqs_s, psd_s = custom_welch(z_slice, fs=fs_2d, nperseg=nperseg)
+        freqs_s, psd_s = custom_welch(z_slice, fs=fs_2d, nperseg=nperseg_2d)
         slice_psds.append((label, freqs_s[1:], psd_s[1:], color))
         
     axes2[0].legend(loc='upper right', fontsize=8.5)
