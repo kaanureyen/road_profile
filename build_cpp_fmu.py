@@ -54,7 +54,7 @@ def build_fmu():
     
     # 3. Create modelDescription.xml in staging
     xml_content = """<?xml version="1.0" encoding="UTF-8"?>
-<fmiModelDescription fmiVersion="2.0" modelName="InfiniteRoadFMU" guid="ab782f63-6d6a-11f1-a954-8ce9ee8a1429" generationTool="Native C++ Implementation" generationDateAndTime="2026-06-21T15:42:00Z" variableNamingConvention="structured" description="Deterministic ISO 8608 2D Isotropic Infinite Road Profile Generator (Single Point)" author="Antigravity Coding Assistant">
+<fmiModelDescription fmiVersion="2.0" modelName="InfiniteRoadFMU" guid="ab782f63-6d6a-11f1-a954-8ce9ee8a1429" generationTool="Native C++ Implementation" generationDateAndTime="2026-06-21T15:42:00Z" variableNamingConvention="structured" description="Deterministic ISO 8608 2D Isotropic Infinite Road Profile Generator (Single Point). Repo: https://github.com/kaanureyen/road_profile" author="Antigravity Coding Assistant">
 	<CoSimulation needsExecutionTool="false" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="false" canBeInstantiatedOnlyOncePerProcess="false" canGetAndSetFMUstate="false" canSerializeFMUstate="false" modelIdentifier="InfiniteRoadFMU" canNotUseMemoryManagementFunctions="true"/>
 	<LogCategories>
 		<Category name="logStatusWarning" description="Log messages with fmi2Warning status."/>

@@ -3,7 +3,7 @@ from pythonfmu import Fmi2Causality, Fmi2Slave, Fmi2Variability, Real, Integer
 
 class InfiniteRoadFMU(Fmi2Slave):
     author = "Antigravity Coding Assistant"
-    description = "Deterministic ISO 8608 2D Isotropic Infinite Road Profile Generator (Single Point)"
+    description = "Deterministic ISO 8608 2D Isotropic Infinite Road Profile Generator (Single Point). Repo: https://github.com/kaanureyen/road_profile"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
