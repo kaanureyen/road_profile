@@ -122,7 +122,7 @@ def process_slice_worker(args):
     fs = 1.0 / dx
     
     # 1. Welch PSD for raw plot visualization (smooth)
-    nperseg = 4096
+    nperseg = 40000
     freqs_welch, psd_welch = custom_welch(z, fs=fs, nperseg=nperseg)
     freqs_welch = freqs_welch[1:]
     psd_welch = psd_welch[1:]
@@ -168,8 +168,8 @@ def main():
     print(f"FMU Settings: Nf = {Nf}, Ntheta = {Ntheta}", flush=True)
     print(f"Target Road: Class B (G = {G_target*1e6:.1f} um3), w = {w_target:.2f}", flush=True)
     
-    slice_length = 200.0
-    dx = 0.01
+    slice_length = 1000.0
+    dx = 0.005
     
     # Fit window [0.01, 90.0] cycles/m (wavelengths 100m to 0.011m)
     f_fit_min = 0.01

@@ -63,11 +63,11 @@ def main():
     fmu_query = FMURoadQuery()
     slave = fmu_query.get_slave(Gd_n0=G_target, w=w_target, f_min=0.005, f_max=100.0, Nf=512, Ntheta=32)
     
-    slice_length = 200.0
-    dx = 0.01
+    slice_length = 10000.0
+    dx = 0.005
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
-    nperseg = 4096
+    nperseg = 40000
     df = fs / nperseg
     
     # Generate 1 slice

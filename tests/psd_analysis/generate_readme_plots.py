@@ -39,11 +39,11 @@ def main():
     
     # 1. 1D C-Type Profile Plot (500m length, dx=0.002m, generated via IFFT with random phases)
     print("Generating 1D Class C profile data via IFFT...", flush=True)
-    slice_length = 5000.0
-    dx = 0.25
+    slice_length = 10000.0
+    dx = 0.005
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
-    nperseg = 400
+    nperseg = 40000
     
     Gd_n0 = 256e-6
     w = 2.0
@@ -126,11 +126,11 @@ def main():
         ("Slice D (135° from (4500,500)m)", 4500.0, 500.0, 135.0, '#e377c2')
     ]
     
-    slice_len_2d = 5000.0
-    dx_2d = 0.25
+    slice_len_2d = 10000.0
+    dx_2d = 0.005
     N_slice_2d = int(slice_len_2d / dx_2d)
     fs_2d = 1.0 / dx_2d
-    nperseg_2d = 400
+    nperseg_2d = 40000
     
     s_slice = np.linspace(0.0, slice_len_2d, N_slice_2d, endpoint=False) # 500m long slices
     slice_psds = []
