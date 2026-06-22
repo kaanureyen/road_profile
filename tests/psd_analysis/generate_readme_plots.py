@@ -126,7 +126,7 @@ def main():
         ("Slice D (135° from (350,100)m)", 350.0, 100.0, 135.0, '#e377c2')
     ]
     
-    s_slice = np.linspace(0.0, 300.0, N_slice, endpoint=False) # 300m long slices
+    s_slice = np.linspace(0.0, 300.0, int(300.0 / dx), endpoint=False) # 300m long slices
     slice_psds = []
     
     fig2, axes2 = plt.subplots(1, 2, figsize=(15, 6.5))
