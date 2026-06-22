@@ -37,31 +37,43 @@ def main():
     f_min = 0.002
     f_max = 2000.0
     
-    # 1. 1D C-Type Profile Plot (500m length, dx=0.025m)
-    print("Generating 1D Class C profile data...", flush=True)
+    # 1. 1D C-Type Profile Plot (500m length, dx=0.025m, generated via IFFT with random phases)
+    print("Generating 1D Class C profile data via IFFT...", flush=True)
     slice_length = 500.0
     dx = 0.025
     N_slice = int(slice_length / dx)
     fs = 1.0 / dx
     nperseg = 4096
     
-    s_1d = np.linspace(0, slice_length, N_slice, endpoint=False)
-    # Put 1D slice along x axis at y=150 (offset from 0)
-    px_1d = s_1d
-    py_1d = np.full_like(s_1d, 150.0)
+    Gd_n0 = 256e-6
+    w = 2.0
+    n0 = 0.1
     
-    z_1d = fmu_query.query_profile_parallel(
-        px_1d, py_1d, num_threads=8, seed=seed,
-        Nf=Nf, Ntheta=Ntheta, f_min=f_min, f_max=f_max, road_class=road_class
-    )
+    freqs_fft = np.fft.rfftfreq(N_slice, d=dx)
+    df_fft = freqs_fft[1] - freqs_fft[0]
+    
+    psd_target = np.zeros_like(freqs_fft)
+    psd_target[1:] = Gd_n0 * (freqs_fft[1:] / n0)**(-w)
+    psd_target[freqs_fft < f_min] = 0.0
+    
+    magnitudes = N_slice * np.sqrt(psd_target * df_fft / 2.0)
+    
+    rng = np.random.RandomState(seed)
+    phases = rng.uniform(0, 2*np.pi, len(freqs_fft))
+    
+    X = magnitudes * np.exp(1j * phases)
+    X[0] = 0.0
+    if N_slice % 2 == 0:
+        X[-1] = np.abs(X[-1])
+        
+    z_1d = np.fft.irfft(X, n=N_slice)
+    s_1d = np.linspace(0, slice_length, N_slice, endpoint=False)
     
     freqs_1d, psd_1d = custom_welch(z_1d, fs=fs, nperseg=nperseg)
     freqs_1d = freqs_1d[1:]
     psd_1d = psd_1d[1:]
     
     # Target Class C PSD (Gd_n0 = 256e-6, w = 2.0)
-    Gd_n0 = 256e-6
-    w = 2.0
     C1 = Gd_n0 * (0.1**w)
     target_psd_1d = C1 * (freqs_1d**(-w))
     
