@@ -159,7 +159,7 @@ void lazy_init(ModelInstance* inst) {
 
     double alpha = inst->w + 1.0;
     double I_val = get_I(alpha);
-    double C2 = C1 / (2.0 * I_val);
+    double C2 = C1 / I_val;
 
     int Nf = inst->Nf;
     int Ntheta = inst->Ntheta;
@@ -180,8 +180,8 @@ void lazy_init(ModelInstance* inst) {
         f_centers[i] = 0.5 * (f_r[i] + f_r[i + 1]);
     }
 
-    // Angular grid
-    double dtheta = 2.0 * M_PI / Ntheta;
+    // Angular grid over [0, pi)
+    double dtheta = M_PI / Ntheta;
 
     inst->amps.clear();
     inst->kx.clear();

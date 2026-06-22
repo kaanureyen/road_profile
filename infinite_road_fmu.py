@@ -73,24 +73,23 @@ class InfiniteRoadFMU(Fmi2Slave):
         alpha = self.w + 1.0
         I_val = self._get_I(alpha)
         
-        # Corrected continuous scaling coefficient C2:
-        # C2 = C1 / (2.0 * I_val)
-        # We use 2.0 in the denominator because the 1D slice projection of the 2D wave field
-        # yields S_1D(f) = 2.0 * C2 * I_val * f^-w.
-        C2 = C1 / (2.0 * I_val)
+        # Corrected continuous scaling coefficient C2 for [0, pi) domain:
+        # C2 = C1 / I_val
+        # We remove the factor of 2.0 from the denominator because we integrate 
+        # only over half the circle [0, pi) instead of [0, 2pi).
+        C2 = C1 / I_val
         
         Nf = self.Nf
         Ntheta = self.Ntheta
 
-        
         # Logarithmic frequency spacing to capture low-frequency energy accurately
         f_r = np.logspace(np.log10(self.f_min), np.log10(self.f_max), Nf + 1)
         df_r = np.diff(f_r)
         f_centers = 0.5 * (f_r[:-1] + f_r[1:])
         
-        # Angular grid
-        theta = np.linspace(0, 2*np.pi, Ntheta, endpoint=False)
-        dtheta = 2*np.pi / Ntheta
+        # Angular grid over [0, pi)
+        theta = np.linspace(0, np.pi, Ntheta, endpoint=False)
+        dtheta = np.pi / Ntheta
         
         amps = []
         kx = []

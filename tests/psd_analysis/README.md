@@ -107,7 +107,7 @@ Varying $N_f$ defines how densely the log-spaced wave rings are spaced radially.
 ---
 
 ## 6. Grid Sensitivity: Number of Directions ($N_\theta$)
-Varying $N_\theta$ defines how many directions are used to distribute the wave components over the $2\pi$ circle.
+Varying $N_\theta$ defines how many directions are used to distribute the wave components over the $\pi$ half-circle.
 - At low $N_\theta = 4$, wave projection onto the 1D slice is highly clumped, causing massive gaps in the 1D spectrum and deviation in the cumulative PSD.
 - At $N_\theta \ge 16$ (FMU default), the projected spectrum tracks the isotropic target smoothly.
 

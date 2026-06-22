@@ -45,16 +45,17 @@ This simplifies to:
 $$S_{1D}(f_x) = 2 C_2 f_x^{-w} I(\alpha)$$
 where $I(\alpha) = \int_{-\infty}^{\infty} (1+t^2)^{-\alpha/2} dt$ is a standard numerical integral.
 
-### Scaling Factor Derivation
-To match the ISO 8608 single-sided 1D displacement PSD $S_{1D}(f) = C_1 f^{-w}$ (where $C_1 = G_d(n_0) n_0^w$), we equate the analytical projection to the target:
-$$2 C_2 I(\alpha) = C_1 \implies C_2 = \frac{C_1}{2 I(\alpha)}$$
+### Scaling Factor and Half-Circle Integration
+To match the target ISO 8608 single-sided 1D displacement PSD $S_{1D}(f) = C_1 f^{-w}$ (where $C_1 = G_d(n_0) n_0^w$), the physical relation requires $2 C_2 I(\alpha) = C_1 \implies C_2 = \frac{C_1}{2 I(\alpha)}$ when integrating over the entire $2\pi$ circle.
 
-Our sum-of-sinusoids model generates independent random phases $\phi \sim \mathcal{U}(0, 2\pi)$ across all angles in $[0, 2\pi)$. Because opposite directions ($\theta$ and $\theta + \pi$) are uncorrelated, the projected 1D spatial frequency PSD of any linear slice contains twice the power of a single-sided spectrum (representing positive frequencies only). Integrating the projected 2D power spectrum over all angles yields:
-$$S_{1D}(f_x) = 2 \int_{-\infty}^{\infty} S_{2D}(f_x, f_y) df_y = 2 \cdot C_2 \cdot I(\alpha) \cdot f_x^{-w}$$
-To match the target ISO 8608 single-sided 1D PSD $S_{1D}(f) = C_1 f^{-w}$, we equate the coefficients:
-$$C_1 = 2 \cdot C_2 \cdot I(\alpha) \implies C_2 = \frac{C_1}{2 I(\alpha)}$$
+However, since a wave propagating at angle $\theta + \pi$ is spatially collinear with a wave at $\theta$ (just with an independent random phase), the full-circle $[0, 2\pi)$ formulation contains redundant propagation axes. 
 
-Using this corrected continuous scaling coefficient, the average PSD of the projected slices converges exactly to the target ISO 8608 power law. The codebase incorporates this correct coefficient, achieving minimal statistical error ($<1.5\%$) across all road classes after calibration.
+By restricting the angular discretization to the half-circle $[0, \pi)$, we eliminate this redundancy. To preserve the total surface variance and target PSD, the continuous power spectral density is doubled, resulting in the continuous scaling coefficient:
+$$C_2' = \frac{C_1}{I(\alpha)}$$
+
+Our sum-of-sinusoids model generates independent random phases $\phi \sim \mathcal{U}(0, 2\pi)$ and distributes the spatial angles uniformly over the range $[0, \pi)$. Because opposite directions are omitted, each of the $N_\theta$ angular bins represents a unique wave propagation axis. This doubles the angular resolution for a given $N_\theta$, making the generated 2D surface more isotropic and reducing directional bias.
+
+Using this updated scaling coefficient, the average PSD of the projected slices converges exactly to the target ISO 8608 power law. The codebase incorporates this correct coefficient, achieving minimal statistical error ($<1.5\%$) across all road classes after calibration.
 
 ---
 
