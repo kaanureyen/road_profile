@@ -111,24 +111,35 @@ def process_slice_worker(args):
     slave.terminate()
     slave.freeInstance()
     
+    N_slice = len(s)
     fs = 1.0 / dx
     
-    # Welch PSD (50% overlap)
-    nperseg = 65536
-    freqs, psd = custom_welch(z, fs=fs, nperseg=nperseg)
+    # 1. Welch PSD for raw plot visualization (smooth)
+    nperseg = 4096
+    freqs_welch, psd_welch = custom_welch(z, fs=fs, nperseg=nperseg)
+    freqs_welch = freqs_welch[1:]
+    psd_welch = psd_welch[1:]
     
-    freqs = freqs[1:]
-    psd = psd[1:]
-    df = freqs[1] - freqs[0]
+    # 2. Direct FFT for exact cumulative PSD calculation and curve fitting
+    win_full = np.hanning(N_slice)
+    win_full_norm = np.sum(win_full**2)
+    z_det = z - np.mean(z)
+    z_win = z_det * win_full
+    fft_full = np.fft.rfft(z_win)
+    freqs_fft = np.fft.rfftfreq(N_slice, d=dx)
+    psd_fft = (2.0 / (fs * win_full_norm)) * (np.abs(fft_full)**2)
     
-    cum_psd = np.cumsum(psd[::-1])[::-1] * df
+    freqs_fft = freqs_fft[1:]
+    psd_fft = psd_fft[1:]
+    df_fft = freqs_fft[1] - freqs_fft[0]
+    cum_psd_fft = np.cumsum(psd_fft[::-1])[::-1] * df_fft
     
     # Decimate to 100 points for curve fitting to speed up integrations
-    fit_indices = np.where((freqs >= f_fit_min) & (freqs <= f_fit_max))[0]
+    fit_indices = np.where((freqs_fft >= f_fit_min) & (freqs_fft <= f_fit_max))[0]
     decimate_idx = np.round(np.linspace(fit_indices[0], fit_indices[-1], 100)).astype(int)
     
-    freqs_fit = freqs[decimate_idx]
-    cum_psd_fit = cum_psd[decimate_idx]
+    freqs_fit = freqs_fft[decimate_idx]
+    cum_psd_fit = cum_psd_fft[decimate_idx]
     
     C1_guess = G_target * (0.1**w_target)
     try:
@@ -138,7 +149,7 @@ def process_slice_worker(args):
     except Exception as e:
         w_fit, G_fit = np.nan, np.nan
         
-    return freqs, psd, cum_psd, w_fit, G_fit
+    return freqs_welch, psd_welch, freqs_fft, cum_psd_fft, w_fit, G_fit
 
 def main():
     G_target = 64e-6
@@ -190,20 +201,23 @@ def main():
             
         w_fits = []
         G_fits = []
-        all_psds = []
-        all_cum_psds = []
-        freqs = None
+        all_psds_welch = []
+        all_cum_psds_fft = []
+        freqs_welch = None
+        freqs_fft = None
         
         with ProcessPoolExecutor(max_workers=workers) as executor:
             slice_results = list(executor.map(process_slice_worker, tasks))
             
-        for idx, (f_vals, psd_vals, cum_psd_vals, w_val, G_val) in enumerate(slice_results):
+        for idx, (f_w, p_w, f_f, c_p_f, w_val, G_val) in enumerate(slice_results):
             w_fits.append(w_val)
             G_fits.append(G_val)
-            all_psds.append(psd_vals)
-            all_cum_psds.append(cum_psd_vals)
-            if freqs is None:
-                freqs = f_vals
+            all_psds_welch.append(p_w)
+            all_cum_psds_fft.append(c_p_f)
+            if freqs_welch is None:
+                freqs_welch = f_w
+            if freqs_fft is None:
+                freqs_fft = f_f
                 
             elapsed = time.time() - start_time
             print(f"  Slice {idx+1:2d}/{slices_per_dist:2d} finished | w_fit: {w_val:.4f} | G_fit: {G_val*1e6:.2f} um3 | Total Elapsed: {elapsed:.1f}s", flush=True)
@@ -231,9 +245,10 @@ def main():
             'std_w': std_w,
             'mean_G': mean_G,
             'std_G': std_G,
-            'freqs': freqs,
-            'psds': np.array(all_psds),
-            'cum_psds': np.array(all_cum_psds)
+            'freqs_welch': freqs_welch,
+            'freqs_fft': freqs_fft,
+            'psds_welch': np.array(all_psds_welch),
+            'cum_psds_fft': np.array(all_cum_psds_fft)
         }
         
     total_time = time.time() - start_time
@@ -251,22 +266,23 @@ def main():
     
     for dist in distances:
         res = results_by_dist[dist]
-        freqs = res['freqs']
-        avg_psd = np.mean(res['psds'], axis=0)
-        avg_cum_psd = np.mean(res['cum_psds'], axis=0)
+        freqs_welch = res['freqs_welch']
+        freqs_fft = res['freqs_fft']
+        avg_psd = np.mean(res['psds_welch'], axis=0)
+        avg_cum_psd = np.mean(res['cum_psds_fft'], axis=0)
         
         # Faint lines for individual slices
-        for i in range(min(3, len(res['psds']))):
-            ax_psd.loglog(freqs, res['psds'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
-            ax_cum.loglog(freqs, res['cum_psds'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
+        for i in range(min(3, len(res['psds_welch']))):
+            ax_psd.loglog(freqs_welch, res['psds_welch'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
+            ax_cum.loglog(freqs_fft, res['cum_psds_fft'][i], color=colors[dist], alpha=0.15, linewidth=0.5)
             
         # Bold average lines
-        ax_psd.loglog(freqs, avg_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
-        ax_cum.loglog(freqs, avg_cum_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
+        ax_psd.loglog(freqs_welch, avg_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
+        ax_cum.loglog(freqs_fft, avg_cum_psd, color=colors[dist], linewidth=2.0, label=labels[dist])
         
     # Theoretical lines
-    target_psd = C1_target * (freqs**(-w_target))
-    ax_psd.loglog(freqs, target_psd, color='black', linestyle='--', linewidth=2.0, label='Theoretical Target')
+    target_psd = C1_target * (freqs_welch**(-w_target))
+    ax_psd.loglog(freqs_welch, target_psd, color='black', linestyle='--', linewidth=2.0, label='Theoretical Target')
     
     print("Computing exact theoretical cumulative PSD for comparison line...", flush=True)
     freqs_theory = np.logspace(np.log10(f_fit_min), np.log10(f_fit_max), 50)

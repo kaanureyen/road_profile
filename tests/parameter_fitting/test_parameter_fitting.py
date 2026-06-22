@@ -33,6 +33,7 @@ def exact_isotropic_cum_model(f_array, C1, w, f_min=0.002, f_max=2000.0):
             results.append(C1 * (2.0 / I_val) * val)
     return np.array(results)
 
+
 def custom_welch(y, fs, nperseg):
     win = np.hanning(nperseg)
     win_norm = np.sum(win**2)
@@ -109,23 +110,36 @@ def process_slice_worker(args):
     slave.terminate()
     slave.freeInstance()
     
+    N_slice = len(s)
     fs = 1.0 / dx
     
-    # Welch PSD (50% overlap)
-    nperseg = 65536
-    freqs, psd = custom_welch(z, fs=fs, nperseg=nperseg)
+    # 1. Welch PSD for raw plot (smooth representation)
+    nperseg = 4096
+    freqs_welch, psd_welch = custom_welch(z, fs=fs, nperseg=nperseg)
+    freqs_welch = freqs_welch[1:]
+    psd_welch = psd_welch[1:]
     
-    freqs = freqs[1:]
-    psd = psd[1:]
-    df = freqs[1] - freqs[0]
+    # 2. Direct FFT PSD for curve fitting
+    win_full = np.hanning(N_slice)
+    win_full_norm = np.sum(win_full**2)
+    z_det = z - np.mean(z)
+    z_win = z_det * win_full
+    fft_full = np.fft.rfft(z_win)
+    freqs_fft = np.fft.rfftfreq(N_slice, d=dx)
+    psd_fft = (2.0 / (fs * win_full_norm)) * (np.abs(fft_full)**2)
     
-    cum_psd = np.cumsum(psd[::-1])[::-1] * df
+    freqs_fft = freqs_fft[1:]
+    psd_fft = psd_fft[1:]
+    df_fft = freqs_fft[1] - freqs_fft[0]
+    
+    # Cumulative PSD (Direct FFT)
+    cum_psd = np.cumsum(psd_fft[::-1])[::-1] * df_fft
     
     # Decimate to 100 points for curve fitting
-    fit_indices = np.where((freqs >= f_fit_min) & (freqs <= f_fit_max))[0]
+    fit_indices = np.where((freqs_fft >= f_fit_min) & (freqs_fft <= f_fit_max))[0]
     decimate_idx = np.round(np.linspace(fit_indices[0], fit_indices[-1], 100)).astype(int)
     
-    freqs_fit = freqs[decimate_idx]
+    freqs_fit = freqs_fft[decimate_idx]
     cum_psd_fit = cum_psd[decimate_idx]
     
     C1_guess = G_target * (0.1**w_target)
@@ -136,7 +150,7 @@ def process_slice_worker(args):
     except Exception as e:
         w_fit, G_fit = np.nan, np.nan
         
-    return freqs, psd, cum_psd, w_fit, G_fit, x1, y1, theta_slice
+    return freqs_welch, psd_welch, cum_psd, w_fit, G_fit, x1, y1, theta_slice
 
 def run_fitting_case(G_target, w_target, unzipdir, guid, model_identifier, var_refs, num_slices=10, slice_length=500.0, dx=0.002, seed=42, workers=10):
     print(f"\n--- Running case: G = {G_target:.2e}, w = {w_target:.2f} ---", flush=True)

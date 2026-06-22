@@ -78,19 +78,33 @@ def main():
     slave.terminate()
     slave.freeInstance()
     
+    # 1. Welch PSD for raw plot (smooth representation)
     freqs, psd = custom_welch(z, fs=fs, nperseg=nperseg)
     freqs = freqs[1:]
     psd = psd[1:]
     
-    # Cumulative PSD
-    cum_psd = np.cumsum(psd[::-1])[::-1] * df
+    # 2. Direct FFT PSD for exact cumulative PSD representation
+    win_full = np.hanning(len(z))
+    win_full_norm = np.sum(win_full**2)
+    z_det = z - np.mean(z)
+    z_win = z_det * win_full
+    fft_full = np.fft.rfft(z_win)
+    freqs_fft = np.fft.rfftfreq(len(z), d=dx)
+    psd_fft = (2.0 / (fs * win_full_norm)) * (np.abs(fft_full)**2)
+    
+    freqs_fft = freqs_fft[1:]
+    psd_fft = psd_fft[1:]
+    df_fft = freqs_fft[1] - freqs_fft[0]
+    
+    # Cumulative PSD (Direct FFT)
+    cum_psd = np.cumsum(psd_fft[::-1])[::-1] * df_fft
     
     # Target analytical PSD
     C1_target = G_target * (0.1**w_target)
     target_psd = C1_target * freqs**(-w_target)
     
-    # Exact cumulative PSD model (using true target parameters)
-    exact_cum = exact_isotropic_cum_model(freqs, C1_target, w_target)
+    # Exact cumulative PSD model (using true target parameters and Direct FFT frequency bins)
+    exact_cum = exact_isotropic_cum_model(freqs_fft, C1_target, w_target)
     
     # Plotting
     fig, axes = plt.subplots(1, 2, figsize=(15, 6))
@@ -107,8 +121,8 @@ def main():
     
     # Right: Cumulative PSD comparison
     ax2 = axes[1]
-    ax2.loglog(freqs, cum_psd, color='blue', linewidth=2, label='Cumulative Welch PSD')
-    ax2.loglog(freqs, exact_cum, color='red', linestyle='--', linewidth=2, label='Exact Isotropic Cumulative Model')
+    ax2.loglog(freqs_fft, cum_psd, color='blue', linewidth=2, label='Cumulative PSD (Direct FFT)')
+    ax2.loglog(freqs_fft, exact_cum, color='red', linestyle='--', linewidth=2, label='Exact Isotropic Cumulative Model')
     ax2.set_title("Cumulative PSD (Residual Height Variance)")
     ax2.set_xlabel("Spatial Frequency (cycles/m)")
     ax2.set_ylabel("Cumulative Power (m²)")
